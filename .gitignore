@@ -1,0 +1,35 @@
+.venv/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.ds_store
+*.log
+
+# Environment variables & secrets
+.env
+.env.local
+
+# Databases & local state
+*.db
+*.db-shm
+*.db-wal
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+# Raw data
+data/raw/*.csv
+
+# Transformer checkpoints & large weights (>100MB)
+models/transformer_checkpoints/
+models/distilbert_*
+models/twitter_roberta_*
+checkpoints/
+runs/
+*.safetensors
+*.bin
+
+# Temporary & scratch files
+scratch/

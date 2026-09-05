@@ -1,0 +1,1 @@
+# SentimentScope source package

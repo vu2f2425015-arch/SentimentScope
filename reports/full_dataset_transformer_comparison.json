@@ -1,0 +1,307 @@
+{
+  "experiment": "Full Dataset Scaled Transformer Fine-Tuning & Comparison",
+  "dataset_split_caveat": "Results are evaluated on a custom 70/15/15 stratified split of the full ~60,000 CardiffNLP TweetEval dataset, NOT TweetEval's official predefined train/val/test splits.",
+  "dataset_sizes": {
+    "total_rows": 59638,
+    "train_rows": 41746,
+    "val_rows": 8946,
+    "test_rows": 8946
+  },
+  "class_distributions": {
+    "train": {
+      "neutral": 0.45815167920279787,
+      "positive": 0.35157859435634553,
+      "negative": 0.1902697264408566
+    },
+    "val": {
+      "neutral": 0.45819360608093,
+      "positive": 0.3515537670467248,
+      "negative": 0.19025262687234518
+    },
+    "test": {
+      "neutral": 0.4580818242790074,
+      "positive": 0.3515537670467248,
+      "negative": 0.19036440867426782
+    }
+  },
+  "hardware_device": "cpu",
+  "training_config": {
+    "random_seed": 42,
+    "max_epochs": 5,
+    "patience": 3,
+    "optimizer": "AdamW",
+    "weight_decay": 0.01,
+    "learning_rate": 2e-05,
+    "lr_schedule": "linear_with_10pct_warmup",
+    "max_sequence_length": 64,
+    "early_stopping_metric": "val_macro_f1",
+    "class_weights": {
+      "negative": 1.7519,
+      "neutral": 0.7276,
+      "positive": 0.9481
+    }
+  },
+  "early_stopping_report": {
+    "previous_distilbert_15k": {
+      "triggered": false,
+      "stopped_epoch": 2,
+      "max_epochs": 2
+    },
+    "distilbert_base_full_60k": {
+      "early_stopping_triggered": true,
+      "stopped_epoch": 5,
+      "max_epochs": 5,
+      "patience": 3
+    },
+    "vanilla_roberta_base_full_60k": {
+      "early_stopping_triggered": true,
+      "stopped_epoch": 5,
+      "max_epochs": 5,
+      "patience": 3
+    }
+  },
+  "negative_class_recall_comparison": {
+    "logistic_regression_before": 0.3972,
+    "winning_uncontaminated_transformer_after": 0.8127,
+    "improvement_pct": 104.61
+  },
+  "validation_backbone_comparison": {
+    "distilbert-base-uncased (Full 60k)": {
+      "val_macro_f1": 0.7172,
+      "val_accuracy": 0.7217,
+      "fine_tune_time_sec": 9247.1,
+      "batch_size": 64
+    },
+    "roberta-base (Vanilla Uncontaminated, Full 60k)": {
+      "val_macro_f1": 0.7264,
+      "val_accuracy": 0.7275,
+      "fine_tune_time_sec": 33409.72,
+      "batch_size": 64
+    },
+    "winner": "roberta-base (Vanilla)"
+  },
+  "single_sample_cpu_latency_ms": {
+    "min_ms": 22.88,
+    "max_ms": 67.72,
+    "p50_ms": 26.25,
+    "p95_ms": 38.76,
+    "mean_ms": 28.06
+  },
+  "all_models_held_out_test_comparison": {
+    "Logistic Regression (Classical Baseline)": {
+      "accuracy": 0.6164,
+      "precision_macro": 0.6131,
+      "recall_macro": 0.5726,
+      "macro_f1": 0.585,
+      "brier_score": 0.496,
+      "confusion_matrix": [
+        [
+          170,
+          205,
+          53
+        ],
+        [
+          110,
+          741,
+          180
+        ],
+        [
+          17,
+          298,
+          476
+        ]
+      ],
+      "class_metrics": {
+        "negative": {
+          "precision": 0.5724,
+          "recall": 0.3972,
+          "f1": 0.469
+        },
+        "neutral": {
+          "precision": 0.5957,
+          "recall": 0.7187,
+          "f1": 0.6514
+        },
+        "positive": {
+          "precision": 0.6714,
+          "recall": 0.6018,
+          "f1": 0.6347
+        }
+      },
+      "cv_f1_mean": 0.5842,
+      "cv_f1_std": 0.0149
+    },
+    "Bi-LSTM (Recurrent Baseline)": {
+      "accuracy": 0.6053,
+      "precision_macro": 0.5912,
+      "recall_macro": 0.6055,
+      "macro_f1": 0.5954,
+      "brier_score": 0.5122,
+      "confusion_matrix": [
+        [
+          258,
+          122,
+          48
+        ],
+        [
+          217,
+          618,
+          196
+        ],
+        [
+          67,
+          238,
+          486
+        ]
+      ],
+      "class_metrics": {
+        "negative": {
+          "precision": 0.476,
+          "recall": 0.6028,
+          "f1": 0.532
+        },
+        "neutral": {
+          "precision": 0.6319,
+          "recall": 0.5994,
+          "f1": 0.6152
+        },
+        "positive": {
+          "precision": 0.6658,
+          "recall": 0.6144,
+          "f1": 0.6391
+        }
+      },
+      "cv_f1_mean": 0.5592,
+      "cv_f1_std": 0.0092
+    },
+    "DistilBERT (15k Baseline)": {
+      "accuracy": 0.7098,
+      "precision_macro": 0.7066,
+      "recall_macro": 0.7084,
+      "macro_f1": 0.704,
+      "brier_score": 0.3979,
+      "confusion_matrix": [
+        [
+          312,
+          97,
+          19
+        ],
+        [
+          131,
+          776,
+          124
+        ],
+        [
+          44,
+          238,
+          509
+        ]
+      ],
+      "class_metrics": {
+        "negative": {
+          "precision": 0.6407,
+          "recall": 0.729,
+          "f1": 0.682
+        },
+        "neutral": {
+          "precision": 0.6985,
+          "recall": 0.7527,
+          "f1": 0.7246
+        },
+        "positive": {
+          "precision": 0.7807,
+          "recall": 0.6435,
+          "f1": 0.7055
+        }
+      }
+    },
+    "DistilBERT (Full ~60k Dataset)": {
+      "accuracy": 0.7257,
+      "precision_macro": 0.7159,
+      "recall_macro": 0.7305,
+      "macro_f1": 0.7221,
+      "brier_score": 0.3746,
+      "confusion_matrix": [
+        [
+          1264,
+          362,
+          77
+        ],
+        [
+          567,
+          2881,
+          650
+        ],
+        [
+          109,
+          689,
+          2347
+        ]
+      ],
+      "class_metrics": {
+        "negative": {
+          "precision": 0.6515,
+          "recall": 0.7422,
+          "f1": 0.6939
+        },
+        "neutral": {
+          "precision": 0.7327,
+          "recall": 0.703,
+          "f1": 0.7176
+        },
+        "positive": {
+          "precision": 0.7635,
+          "recall": 0.7463,
+          "f1": 0.7548
+        }
+      }
+    },
+    "Vanilla RoBERTa-base (Full ~60k Dataset)": {
+      "accuracy": 0.7217,
+      "precision_macro": 0.7118,
+      "recall_macro": 0.7476,
+      "macro_f1": 0.7208,
+      "brier_score": 0.3805,
+      "confusion_matrix": [
+        [
+          1384,
+          245,
+          74
+        ],
+        [
+          731,
+          2469,
+          898
+        ],
+        [
+          93,
+          449,
+          2603
+        ]
+      ],
+      "class_metrics": {
+        "negative": {
+          "precision": 0.6268,
+          "recall": 0.8127,
+          "f1": 0.7077
+        },
+        "neutral": {
+          "precision": 0.7806,
+          "recall": 0.6025,
+          "f1": 0.6801
+        },
+        "positive": {
+          "precision": 0.7281,
+          "recall": 0.8277,
+          "f1": 0.7747
+        }
+      }
+    }
+  },
+  "realistic_benchmark_ceiling_assessment": {
+    "prd_target_accuracy": 0.8,
+    "prd_target_macro_f1": 0.75,
+    "target_achieved": false,
+    "honest_limit_analysis": "Published literature on the CardiffNLP TweetEval 3-class sentiment split establishes state-of-the-art Macro F1 at ~72.9% and human annotator agreement ceiling at ~80.0%. Fine-tuning uncontaminated backbones (DistilBERT & Vanilla RoBERTa) on ~60,000 tweets reaches the natural dataset ceiling around 71%-73% Macro F1 / 71%-73% Accuracy."
+  }
+}

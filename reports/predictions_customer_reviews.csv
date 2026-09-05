@@ -1,0 +1,4 @@
+review,sentiment,cleaned_text,predicted_sentiment,confidence,prob_negative,prob_neutral,prob_positive
+I absolutely love this product! Best purchase ever.,positive,absolutely love product best purchase ever,positive,0.9365,0.0283,0.0351,0.9365
+"Terrible customer service, never buying again.",negative,terrible customer service never buying,negative,0.748,0.748,0.2204,0.0316
+The package was delivered on Tuesday afternoon.,neutral,package delivered tuesday afternoon,neutral,0.6462,0.0768,0.6462,0.277

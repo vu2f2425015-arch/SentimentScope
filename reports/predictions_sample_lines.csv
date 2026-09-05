@@ -1,0 +1,4 @@
+text,cleaned_text,predicted_sentiment,confidence,prob_negative,prob_neutral,prob_positive
+Fantastic camera quality and great battery life!,fantastic camera quality great battery life,positive,0.8858,0.0583,0.0559,0.8858
+"Broken on arrival, complete waste of money.",broken arrival complete waste money,negative,0.6348,0.6348,0.3259,0.0393
+The item is made of plastic and weights 200 grams.,item made plastic weight gram,neutral,0.7179,0.0677,0.7179,0.2144
