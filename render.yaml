@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: sentimentscope
+    env: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: MODELS_DIR
+        value: models
+      - key: REPORTS_DIR
+        value: reports
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: ENABLE_LIVE_INGESTION
+        value: "true"
