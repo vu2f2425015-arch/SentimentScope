@@ -14,10 +14,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-import tensorflow as tf
-import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-
 from src.preprocessing import clean_text, minimal_clean_text
 from src.features import TFIDFExtractor, SequentialExtractor
 import asyncio
@@ -71,6 +67,7 @@ async def lifespan(app: FastAPI):
             model_state["model"] = model
             model_state["vectorizer"] = vectorizer
         elif model_type == "keras":
+            import tensorflow as tf
             model = tf.keras.models.load_model(artifact_path)
             tokenizer_path = os.path.join(MODELS_DIR, details["tokenizer"])
             seq_extractor = SequentialExtractor.load(tokenizer_path, max_len=150)
@@ -78,6 +75,8 @@ async def lifespan(app: FastAPI):
             model_state["model"] = model
             model_state["tokenizer"] = seq_extractor
         elif model_type == "transformer":
+            import torch
+            from transformers import AutoTokenizer, AutoModelForSequenceClassification
             tokenizer_path = os.path.join(MODELS_DIR, details["tokenizer"])
             if not os.path.exists(artifact_path):
                 print(f"[API Warning] Transformer artifact directory '{artifact_path}' not found. Falling back to default pretrained checkpoint.")
@@ -100,6 +99,7 @@ async def lifespan(app: FastAPI):
         if model_state["type"] == "sklearn":
             _ = model_state["model"].predict_proba(model_state["vectorizer"].transform(["warmup"]).toarray())
         elif model_state["type"] == "transformer":
+            import torch
             inputs = model_state["tokenizer"]("Warmup initial text load", max_length=64, padding=True, truncation=True, return_tensors="pt")
             with torch.no_grad():
                 _ = model_state["model"](**inputs)
