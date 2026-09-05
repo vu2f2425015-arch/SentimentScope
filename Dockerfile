@@ -18,7 +18,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy python dependencies list
 COPY requirements.txt .
 
-# Install Python packages
+# Install CPU-only PyTorch first (reduces download from 2.2GB GPU wheel to ~150MB)
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
+# Install remaining Python packages
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Pre-download NLTK data during build phase to avoid runtime download latencies
