@@ -19,10 +19,13 @@ if not root_dir:
 
 backend_dir = os.path.join(root_dir, "backend")
 
+# Insert backend_dir FIRST so 'src.preprocessing' resolves to backend/src
+if backend_dir in sys.path:
+    sys.path.remove(backend_dir)
+sys.path.insert(0, backend_dir)
+
 if root_dir not in sys.path:
-    sys.path.insert(0, root_dir)
-if backend_dir not in sys.path:
-    sys.path.insert(0, backend_dir)
+    sys.path.append(root_dir)
 
 # Environment overrides for Vercel serverless environment
 os.environ["MODELS_DIR"] = os.path.join(root_dir, "models")
@@ -31,7 +34,10 @@ os.environ["INGESTION_DB_PATH"] = "/tmp/rolling_store.db"
 os.environ["ENABLE_LIVE_INGESTION"] = "false"
 
 # Top-level ASGI app import for Vercel static AST analysis
-from backend.src.api import app, load_model_state
+try:
+    from src.api import app, load_model_state
+except ImportError:
+    from backend.src.api import app, load_model_state
 
 # Pre-warm model load during serverless function container initialization
 try:
