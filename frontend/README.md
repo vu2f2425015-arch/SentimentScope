@@ -5,7 +5,7 @@ This directory contains the standalone web client for **SentimentScope**, design
 ## Key Features
 - **Zero Build Time**: Lightweight Single-Page Application (HTML5, Vanilla JS, Tailwind CSS, Chart.js).
 - **DotField Interactive Engine**: 60fps canvas particle mesh with interactive tab behaviors and dynamic light/dark themes.
-- **Dynamic Cloud Backend Switcher**: Interactive modal to connect to your live Render backend (`https://sentimentscope-iz3a.onrender.com`) or test locally on `http://127.0.0.1:8000`.
+- **Dynamic Cloud Backend Switcher**: Interactive modal to connect to your Vercel Serverless backend API or test locally on `http://127.0.0.1:8000`.
 - **Automatic Fallback & Persistence**: Backend URL is saved in browser `localStorage`.
 
 ---

@@ -394,7 +394,7 @@
                 <span class="material-symbols-outlined text-rose-400 text-2xl">cloud_off</span>
                 <div>
                     <strong class="font-bold text-rose-200">Backend Server Offline or Disconnected</strong>
-                    <p class="text-xs text-rose-300/80 mt-0.5">Attempting connection to <code class="bg-black/30 px-1.5 py-0.5 rounded text-[11px] font-mono text-indigo-300" id="offline-target-url">http://127.0.0.1:8000</code>. If deployed on Render, verify instance health.</p>
+                    <p class="text-xs text-rose-300/80 mt-0.5">Attempting connection to <code class="bg-black/30 px-1.5 py-0.5 rounded text-[11px] font-mono text-indigo-300" id="offline-target-url">http://127.0.0.1:8000</code>. Verify server status or Vercel API health.</p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
@@ -2223,17 +2223,22 @@
         // -------------------------------------------------------------
         function getApiBase() {
             const custom = localStorage.getItem('SENTIMENTSCOPE_API_URL');
-            if (custom && custom.trim()) return custom.trim().replace(/\/+$/, '');
+            // If browser stored an old dead Render URL from previous sessions, clear it so it auto-uses Vercel API
+            if (custom && (custom.includes('onrender.com') || custom.includes('sentimentscope-iz3a'))) {
+                localStorage.removeItem('SENTIMENTSCOPE_API_URL');
+            } else if (custom && custom.trim()) {
+                return custom.trim().replace(/\/+$/, '');
+            }
             if (window.ENV_API_URL && window.ENV_API_URL.trim()) return window.ENV_API_URL.trim().replace(/\/+$/, '');
             if (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                 return 'http://127.0.0.1:8000';
             }
-            // Default Render backend instance for live cloud deployment
-            return 'https://sentimentscope-iz3a.onrender.com';
+            // Default to current origin (Vercel serverless function) when deployed to cloud host
+            return window.location.origin;
         }
 
         function setApiBase(url) {
-            if (!url || !url.trim()) {
+            if (!url || !url.trim() || url === window.location.origin) {
                 localStorage.removeItem('SENTIMENTSCOPE_API_URL');
             } else {
                 localStorage.setItem('SENTIMENTSCOPE_API_URL', url.trim().replace(/\/+$/, ''));
@@ -2265,12 +2270,32 @@
             const ind = document.getElementById('health-indicator');
             const banner = document.getElementById('backend-offline-banner');
             const targetEl = document.getElementById('offline-target-url');
-            const activeUrl = getApiBase();
+            let activeUrl = getApiBase();
             if (targetEl) targetEl.innerText = activeUrl;
 
             const startPing = performance.now();
             try {
-                const res = await fetchWithTimeout('/health', {}, 6000);
+                let res;
+                try {
+                    res = await fetchWithTimeout('/health', {}, 5000);
+                } catch (firstErr) {
+                    // Fallback attempt to window.location.origin if custom URL failed
+                    if (activeUrl !== window.location.origin && window.location.protocol !== 'file:') {
+                        console.warn("Primary API base failed, attempting same-origin fallback:", window.location.origin);
+                        const fallbackUrl = `${window.location.origin}/health`;
+                        res = await fetch(fallbackUrl);
+                        if (res.ok) {
+                            setApiBase(window.location.origin);
+                            activeUrl = window.location.origin;
+                            if (targetEl) targetEl.innerText = activeUrl;
+                        } else {
+                            throw firstErr;
+                        }
+                    } else {
+                        throw firstErr;
+                    }
+                }
+
                 const latencyMs = Math.round(performance.now() - startPing);
                 if (!res.ok) throw new Error("Status: " + res.status);
                 const data = await res.json();
@@ -2986,7 +3011,7 @@
                     </span>
                     <div>
                         <h3 id="api-modal-title" class="text-base font-headline font-bold text-on-background">Backend API Settings</h3>
-                        <p class="text-xs text-on-surface-variant">Configure target cloud API endpoint (Render / Localhost)</p>
+                        <p class="text-xs text-on-surface-variant">Configure target cloud API endpoint (Vercel Serverless / Localhost)</p>
                     </div>
                 </div>
                 <button onclick="closeApiConfigModal()" class="p-1.5 rounded-lg text-on-surface-variant hover:text-on-background hover:bg-card-border/40 transition-colors" aria-label="Close API configuration dialog">
@@ -2998,18 +3023,18 @@
                 <div>
                     <label for="api-url-input" class="block text-xs font-semibold text-on-background mb-1.5">Backend Service URL</label>
                     <div class="relative">
-                        <input type="url" id="api-url-input" class="w-full glass-inner px-3.5 py-2.5 rounded-xl text-xs font-mono text-on-background border border-card-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all pr-24" placeholder="https://your-service.onrender.com" />
+                        <input type="url" id="api-url-input" class="w-full glass-inner px-3.5 py-2.5 rounded-xl text-xs font-mono text-on-background border border-card-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all pr-24" placeholder="https://your-app.vercel.app" />
                         <button onclick="testApiUrl()" id="btn-test-api" class="absolute right-1.5 top-1.5 px-2.5 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-[11px] border border-indigo-500/20 transition-all flex items-center gap-1">
                             <span class="material-symbols-outlined text-xs">network_check</span> Test Ping
                         </button>
                     </div>
-                    <p class="text-[11px] text-on-surface-variant mt-1.5">Enter your Render service URL (e.g. <code class="font-mono text-indigo-400">https://sentimentscope-iz3a.onrender.com</code>) or local address.</p>
+                    <p class="text-[11px] text-on-surface-variant mt-1.5">Enter your Vercel Serverless URL or local API address.</p>
                 </div>
 
                 <!-- Presets -->
                 <div class="flex flex-wrap gap-2 pt-1">
-                    <button type="button" onclick="setApiInput('https://sentimentscope-iz3a.onrender.com')" class="px-2.5 py-1 rounded-lg glass-inner hover:border-primary/40 text-on-surface-variant hover:text-primary text-[11px] transition-all flex items-center gap-1">
-                        <span class="material-symbols-outlined text-[12px] text-purple-400">cloud</span> Render Production
+                    <button type="button" onclick="setApiInput(window.location.origin)" class="px-2.5 py-1 rounded-lg glass-inner hover:border-primary/40 text-on-surface-variant hover:text-primary text-[11px] transition-all flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[12px] text-emerald-400">bolt</span> Vercel API (Same Origin)
                     </button>
                     <button type="button" onclick="setApiInput('http://127.0.0.1:8000')" class="px-2.5 py-1 rounded-lg glass-inner hover:border-primary/40 text-on-surface-variant hover:text-primary text-[11px] transition-all flex items-center gap-1">
                         <span class="material-symbols-outlined text-[12px] text-indigo-400">terminal</span> Localhost (8000)

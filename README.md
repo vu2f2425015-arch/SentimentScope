@@ -329,15 +329,13 @@ docker run -d -p 8000:8000 --env-file .env --name sentimentscope_app sentimentsc
 
 ## ☁️ Production Deployment Guide
 
-### Option 1: Deploy on Render
+### Vercel Full-Stack Serverless (Recommended)
 
-1. **Create Web Service**: Connect your GitHub repository in the Render Dashboard.
-2. **Environment**: Choose **Docker**.
-3. **Environment Variables**:
-   - `PORT`: `8000`
-   - `ALLOWED_ORIGINS`: `https://<your-render-app>.onrender.com`
-4. **Health Check Path**: Set Health Check Path to `/health`.
-5. **Start Command**: Managed automatically via Dockerfile (`uvicorn src.api:app --host 0.0.0.0 --port 8000`).
+1. **Import Repository**: Connect your GitHub repository (`SentimentScope`) in the [Vercel Dashboard](https://vercel.com).
+2. **Project Settings**:
+   - Framework Preset: `Other`
+   - Root Directory: `./` (leave empty / default)
+3. **Deploy**: Click **Deploy**. Vercel automatically builds both the frontend static site and the Python Serverless API.
 
 ### Option 2: Deploy on Railway
 

@@ -1,35 +1,13 @@
-# SentimentScope Backend API (Render)
+# SentimentScope Backend API
 
-This directory contains the standalone production REST API for **SentimentScope**, designed for deployment on [Render](https://render.com).
+This directory contains the production REST API engine for **SentimentScope**, designed for deployment as a Vercel Serverless Function or containerized FastAPI service.
 
 ## Key Features
 - **FastAPI Core**: Ultra-low latency (<50ms inference time).
-- **RAM-Optimized**: Startup memory under 200MB (safely fits within Render Free Tier's 512MB RAM cap).
-- **Lazy Loading**: TensorFlow and heavy deep learning modules are lazy-loaded only when requested.
-- **Dynamic Port Binding**: Synchronized with Render's `$PORT` environment variable.
+- **RAM-Optimized**: Startup memory under 200MB.
+- **Lazy Loading**: Heavy deep learning modules are lazy-loaded only when requested.
 - **Permissive CORS**: Automatically accepts requests from all `https://*.vercel.app` domains, custom origins, and localhost.
-- **Rolling SQLite Telemetry**: Background Hacker News live ingestion with automated retention pruning.
-
----
-
-## Deploy to Render (2 Options)
-
-### Option A: Using Render Blueprint (1-Click)
-1. Push your repository to GitHub.
-2. In the [Render Dashboard](https://dashboard.render.com), navigate to **Blueprints** -> **New Blueprint Instance**.
-3. Connect your `SentimentScope` repository.
-4. Render detects `render.yaml` and deploys the web service automatically with health checks at `/health`.
-
-### Option B: Manual Web Service
-1. In the [Render Dashboard](https://dashboard.render.com), click **New** -> **Web Service**.
-2. Connect your `SentimentScope` repository.
-3. Configure the service:
-   - **Name**: `sentimentscope-api`
-   - **Language / Environment**: `Docker`
-   - **Root Directory**: `backend` (or leave root if deploying from a dedicated backend repo)
-   - **Instance Type**: Free (512 MB)
-   - **Health Check Path**: `/health`
-4. Click **Create Web Service**.
+- **Rolling SQLite Telemetry**: Live ingestion with automated retention pruning.
 
 ---
 
