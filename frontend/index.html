@@ -2561,8 +2561,8 @@
             }
 
             // Early warning for massive files (1M rows is typically 50MB - 150MB+)
-            if (file.size > 20 * 1024 * 1024) {
-                showToast(`File size is ${(file.size / (1024 * 1024)).toFixed(1)}MB. Synchronous web upload is capped at 20MB / 10,000 rows to prevent 60s browser timeouts. For 1 Million rows, use the offline streaming CLI: python src/batch_inference.py`, "warning", 10000);
+            if (file.size > 35 * 1024 * 1024) {
+                showToast(`File size is ${(file.size / (1024 * 1024)).toFixed(1)}MB. Synchronous web upload is capped at 35MB / 50,000 rows to prevent browser timeouts. For 1 Million rows, use the offline streaming CLI: python src/batch_inference.py`, "warning", 10000);
                 return;
             }
 
@@ -2579,11 +2579,11 @@
             document.getElementById('batch-progress-status').innerText = "Uploading & processing batch...";
 
             try {
-                // Extended timeout to 120s to allow server to process up to 10,000 rows comfortably
+                // Extended timeout to 300s (5 min) to allow server to process up to 50,000 rows comfortably
                 const res = await fetchWithTimeout('/predict/batch', {
                     method: 'POST',
                     body: formData
-                }, 120000);
+                }, 300000);
 
                 if (!res.ok) {
                     const errMsg = await parseErrorDetail(res, 'Batch processing failed');

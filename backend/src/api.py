@@ -31,7 +31,7 @@ REPORTS_DIR = os.getenv("REPORTS_DIR", "reports")
 ENABLE_LIVE_INGESTION = os.getenv("ENABLE_LIVE_INGESTION", "true").lower() in ("true", "1", "yes")
 PUBLIC_DIR = "public"
 MAX_SYNC_BATCH_ROWS = int(os.getenv("MAX_SYNC_BATCH_ROWS", "10000"))
-MAX_BATCH_FILE_BYTES = 25 * 1024 * 1024  # 25 MB max for synchronous web uploads
+MAX_BATCH_FILE_BYTES = int(os.getenv("MAX_BATCH_FILE_BYTES", str(25 * 1024 * 1024)))
 
 # Global model state loaded on startup
 model_state: Dict[str, Any] = {}
@@ -451,7 +451,7 @@ async def predict_batch(file: UploadFile = File(...)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
                 f"Uploaded file contains {total_uploaded:,} rows, exceeding the synchronous web batch limit of {MAX_SYNC_BATCH_ROWS:,} rows. "
-                "Processing 1 Million rows over a single web request causes browser 60s timeouts and server memory exhaustion. "
+                "Processing massive datasets over a single web request causes browser/server timeouts and memory exhaustion. "
                 "To process 1,000,000 rows in minutes, please run our streaming CLI batch engine: "
                 f"`python src/batch_inference.py --input <path.csv>` "
                 f"or upload a CSV sample of up to {MAX_SYNC_BATCH_ROWS:,} rows for real-time web dashboard visualization."
