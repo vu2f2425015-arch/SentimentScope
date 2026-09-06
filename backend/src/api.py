@@ -145,6 +145,16 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+@app.middleware("http")
+async def fix_vercel_path_middleware(request, call_next):
+    path = request.url.path
+    if path.startswith("/api/index.py"):
+        new_path = path.replace("/api/index.py", "", 1)
+        if not new_path:
+            new_path = "/"
+        request.scope["path"] = new_path
+    return await call_next(request)
+
 # Configurable CORS via environment variable ALLOWED_ORIGINS
 raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000,http://localhost:3000,http://127.0.0.1:3000,*")
 is_wildcard = "*" in [o.strip() for o in raw_origins.split(",")]
