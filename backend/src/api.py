@@ -36,6 +36,81 @@ model_state: Dict[str, Any] = {}
 ingestion_task: Optional[asyncio.Task] = None
 
 
+def load_model_state():
+    """
+    Safely loads model artifacts into model_state on demand or startup.
+    """
+    if "model" in model_state:
+        return
+
+    # 1. Initialize SQLite rolling results store
+    try:
+        init_db()
+    except Exception as e:
+        print(f"[API Warning] DB init error: {e}")
+
+    # 2. Load trained model & vectorizer
+    meta_path = os.path.join(MODELS_DIR, "best_model_meta.json")
+    if not os.path.exists(meta_path):
+        print(f"[API Warning] Best model metadata not found at '{meta_path}'. Please run training first.")
+        return
+
+    with open(meta_path, "r") as f:
+        meta = json.load(f)
+        
+    best_name = meta["best_model_name"]
+    details = meta["details"]
+    model_type = details["type"]
+    
+    artifact_path = os.path.join(MODELS_DIR, details["artifact"])
+    if model_type == "sklearn":
+        model = joblib.load(artifact_path)
+        vectorizer_path = os.path.join(MODELS_DIR, details["vectorizer"])
+        vectorizer = joblib.load(vectorizer_path)
+        model_state["type"] = "sklearn"
+        model_state["model"] = model
+        model_state["vectorizer"] = vectorizer
+    elif model_type == "keras":
+        import tensorflow as tf
+        model = tf.keras.models.load_model(artifact_path)
+        tokenizer_path = os.path.join(MODELS_DIR, details["tokenizer"])
+        seq_extractor = SequentialExtractor.load(tokenizer_path, max_len=150)
+        model_state["type"] = "keras"
+        model_state["model"] = model
+        model_state["tokenizer"] = seq_extractor
+    elif model_type == "transformer":
+        import torch
+        from transformers import AutoTokenizer, AutoModelForSequenceClassification
+        tokenizer_path = os.path.join(MODELS_DIR, details["tokenizer"])
+        if not os.path.exists(artifact_path):
+            print(f"[API Warning] Transformer artifact directory '{artifact_path}' not found. Falling back to default pretrained checkpoint.")
+            artifact_path = "distilbert-base-uncased"
+            tokenizer_path = "distilbert-base-uncased"
+        
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+        model = AutoModelForSequenceClassification.from_pretrained(artifact_path, num_labels=3)
+        model.eval()
+        model_state["type"] = "transformer"
+        model_state["model"] = model
+        model_state["tokenizer"] = tokenizer
+        model_state["max_len"] = 64
+
+    model_state["name"] = best_name
+    model_state["metrics"] = meta.get("metrics", {})
+    
+    # Warmup NLTK and model inference to avoid first-call cold-start overhead
+    _ = clean_text("Warmup initial text load")
+    if model_state["type"] == "sklearn":
+        _ = model_state["model"].predict_proba(model_state["vectorizer"].transform(["warmup"]).toarray())
+    elif model_state["type"] == "transformer":
+        import torch
+        inputs = model_state["tokenizer"]("Warmup initial text load", max_length=64, padding=True, truncation=True, return_tensors="pt")
+        with torch.no_grad():
+            _ = model_state["model"](**inputs)
+    
+    print(f"[API] Successfully loaded best model '{best_name}' ({model_type}).")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -43,70 +118,9 @@ async def lifespan(app: FastAPI):
     """
     global ingestion_task
     
-    # 1. Initialize SQLite rolling results store
-    init_db()
-    
-    # 2. Load trained model & vectorizer
-    meta_path = os.path.join(MODELS_DIR, "best_model_meta.json")
-    if not os.path.exists(meta_path):
-        print(f"[API Warning] Best model metadata not found at '{meta_path}'. Please run training first.")
-    else:
-        with open(meta_path, "r") as f:
-            meta = json.load(f)
-            
-        best_name = meta["best_model_name"]
-        details = meta["details"]
-        model_type = details["type"]
-        
-        artifact_path = os.path.join(MODELS_DIR, details["artifact"])
-        if model_type == "sklearn":
-            model = joblib.load(artifact_path)
-            vectorizer_path = os.path.join(MODELS_DIR, details["vectorizer"])
-            vectorizer = joblib.load(vectorizer_path)
-            model_state["type"] = "sklearn"
-            model_state["model"] = model
-            model_state["vectorizer"] = vectorizer
-        elif model_type == "keras":
-            import tensorflow as tf
-            model = tf.keras.models.load_model(artifact_path)
-            tokenizer_path = os.path.join(MODELS_DIR, details["tokenizer"])
-            seq_extractor = SequentialExtractor.load(tokenizer_path, max_len=150)
-            model_state["type"] = "keras"
-            model_state["model"] = model
-            model_state["tokenizer"] = seq_extractor
-        elif model_type == "transformer":
-            import torch
-            from transformers import AutoTokenizer, AutoModelForSequenceClassification
-            tokenizer_path = os.path.join(MODELS_DIR, details["tokenizer"])
-            if not os.path.exists(artifact_path):
-                print(f"[API Warning] Transformer artifact directory '{artifact_path}' not found. Falling back to default pretrained checkpoint.")
-                artifact_path = "distilbert-base-uncased"
-                tokenizer_path = "distilbert-base-uncased"
-            
-            tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-            model = AutoModelForSequenceClassification.from_pretrained(artifact_path, num_labels=3)
-            model.eval()
-            model_state["type"] = "transformer"
-            model_state["model"] = model
-            model_state["tokenizer"] = tokenizer
-            model_state["max_len"] = 64  # Matches training max_len = 64 exactly
+    load_model_state()
 
-        model_state["name"] = best_name
-        model_state["metrics"] = meta.get("metrics", {})
-        
-        # Warmup NLTK and model inference to avoid first-call cold-start overhead
-        _ = clean_text("Warmup initial text load")
-        if model_state["type"] == "sklearn":
-            _ = model_state["model"].predict_proba(model_state["vectorizer"].transform(["warmup"]).toarray())
-        elif model_state["type"] == "transformer":
-            import torch
-            inputs = model_state["tokenizer"]("Warmup initial text load", max_length=64, padding=True, truncation=True, return_tensors="pt")
-            with torch.no_grad():
-                _ = model_state["model"](**inputs)
-        
-        print(f"[API] Successfully loaded best model '{best_name}' ({model_type}).")
-
-    # 3. Start background live ingestion scheduler if enabled
+    # Start background live ingestion scheduler if enabled
     if ENABLE_LIVE_INGESTION:
         ingestion_task = asyncio.create_task(background_ingestion_loop())
         print("[API] Background live ingestion scheduler started.")
@@ -288,6 +302,7 @@ def health():
     """
     Health check endpoint returning service status, model state, and version.
     """
+    load_model_state()
     is_loaded = "model" in model_state
     return {
         "status": "healthy" if is_loaded else "degraded",

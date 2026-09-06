@@ -2,13 +2,20 @@ import os
 import sys
 
 # Dynamic root & backend path resolution for Vercel serverless function
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
+curr = os.path.dirname(os.path.abspath(__file__))
+root_dir = None
 
-if os.path.exists(os.path.join(parent_dir, "backend")):
-    root_dir = parent_dir
-else:
-    root_dir = os.path.dirname(parent_dir)
+for _ in range(5):
+    if os.path.exists(os.path.join(curr, "models", "best_model_meta.json")) or os.path.exists(os.path.join(curr, "backend", "src", "api.py")):
+        root_dir = curr
+        break
+    parent = os.path.dirname(curr)
+    if parent == curr:
+        break
+    curr = parent
+
+if not root_dir:
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 backend_dir = os.path.join(root_dir, "backend")
 
@@ -24,4 +31,10 @@ os.environ["INGESTION_DB_PATH"] = "/tmp/rolling_store.db"
 os.environ["ENABLE_LIVE_INGESTION"] = "false"
 
 # Top-level ASGI app import for Vercel static AST analysis
-from backend.src.api import app
+from backend.src.api import app, load_model_state
+
+# Pre-warm model load during serverless function container initialization
+try:
+    load_model_state()
+except Exception as _err:
+    print(f"[Vercel Init Warning] Pre-warm model load error: {_err}")

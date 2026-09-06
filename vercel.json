@@ -1,6 +1,14 @@
 {
   "outputDirectory": "frontend",
   "cleanUrls": true,
+  "functions": {
+    "api/*.py": {
+      "includeFiles": "models/**"
+    },
+    "frontend/api/*.py": {
+      "includeFiles": "models/**"
+    }
+  },
   "rewrites": [
     { "source": "/api/health", "destination": "/api/index.py" },
     { "source": "/api/predict/(.*)", "destination": "/api/index.py" },
@@ -13,8 +21,7 @@
     { "source": "/live/(.*)", "destination": "/api/index.py" },
     { "source": "/model/(.*)", "destination": "/api/index.py" },
     { "source": "/docs", "destination": "/api/index.py" },
-    { "source": "/openapi.json", "destination": "/api/index.py" },
-    { "source": "/(.*)", "destination": "/frontend/$1" }
+    { "source": "/openapi.json", "destination": "/api/index.py" }
   ],
   "headers": [
     {
