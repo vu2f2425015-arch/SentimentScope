@@ -89,3 +89,18 @@ def test_get_metrics():
         assert response.status_code == 200
         data = response.json()
         assert "models" in data or "best_model_name" in data
+
+
+def test_predict_batch_oversized_rows():
+    from unittest.mock import patch
+    with patch("src.api.MAX_SYNC_BATCH_ROWS", 5):
+        csv_content = "text\n" + "\n".join([f"Review text number {i}" for i in range(10)])
+        file_tuple = ("test_large.csv", io.BytesIO(csv_content.encode("utf-8")), "text/csv")
+        with TestClient(app) as client:
+            response = client.post(
+                "/predict/batch",
+                files={"file": file_tuple}
+            )
+            assert response.status_code == 400
+            assert "exceeding the synchronous web batch limit" in response.json()["detail"]
+

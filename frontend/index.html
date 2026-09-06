@@ -2560,6 +2560,12 @@
                 return;
             }
 
+            // Early warning for massive files (1M rows is typically 50MB - 150MB+)
+            if (file.size > 20 * 1024 * 1024) {
+                showToast(`File size is ${(file.size / (1024 * 1024)).toFixed(1)}MB. Synchronous web upload is capped at 20MB / 10,000 rows to prevent 60s browser timeouts. For 1 Million rows, use the offline streaming CLI: python src/batch_inference.py`, "warning", 10000);
+                return;
+            }
+
             const formData = new FormData();
             formData.append('file', file);
 
@@ -2573,10 +2579,11 @@
             document.getElementById('batch-progress-status').innerText = "Uploading & processing batch...";
 
             try {
+                // Extended timeout to 120s to allow server to process up to 10,000 rows comfortably
                 const res = await fetchWithTimeout('/predict/batch', {
                     method: 'POST',
                     body: formData
-                }, 60000);
+                }, 120000);
 
                 if (!res.ok) {
                     const errMsg = await parseErrorDetail(res, 'Batch processing failed');
@@ -2585,7 +2592,7 @@
 
                 const data = await res.json();
 
-                document.getElementById('batch-total-rows').innerText = data.total_rows;
+                document.getElementById('batch-total-rows').innerText = Number(data.total_rows).toLocaleString();
                 document.getElementById('batch-pos-pct').innerText = `${data.positive_pct}%`;
                 document.getElementById('batch-neu-pct').innerText = `${data.neutral_pct}%`;
                 document.getElementById('batch-neg-pct').innerText = `${data.negative_pct}%`;
@@ -2626,9 +2633,12 @@
                 // Also refresh the live feed table to switch to batch mode display
                 loadLiveFeed();
 
-                showToast(`Batch of ${data.total_rows} rows processed & dashboard updated!`, "check_circle");
+                if (data.note) {
+                    showToast(data.note, "info", 7000);
+                }
+                showToast(`Batch of ${Number(data.total_rows).toLocaleString()} rows processed & dashboard updated!`, "check_circle");
             } catch (err) {
-                showToast(err.message, "error");
+                showToast(err.message, "error", 9000);
             } finally {
                 progContainer.classList.add('hidden');
             }
