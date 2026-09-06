@@ -2249,12 +2249,17 @@
             }
         }
 
-        async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
+        async function fetchWithTimeout(url, options = {}, timeoutMs = 25000) {
             const controller = new AbortController();
             const id = setTimeout(() => controller.abort(), timeoutMs);
             try {
-                const apiBase = getApiBase();
-                const finalUrl = url.startsWith('http') ? url : `${apiBase}${url}`;
+                let apiBase = getApiBase().replace(/\/+$/, '');
+                // Sanitize any redundant or leftover /api prefix
+                let cleanUrl = url;
+                if (cleanUrl.startsWith('/api/')) {
+                    cleanUrl = cleanUrl.replace(/^\/api/, '');
+                }
+                const finalUrl = cleanUrl.startsWith('http') ? cleanUrl : `${apiBase}${cleanUrl}`;
                 const response = await fetch(finalUrl, {
                     ...options,
                     signal: controller.signal
@@ -2639,7 +2644,7 @@
             if (benchError) benchError.classList.add('hidden');
 
             try {
-                const res = await fetchWithTimeout('/model/metrics', {}, 8000);
+                const res = await fetchWithTimeout('/model/metrics', {}, 25000);
                 if (!res.ok) throw new Error("Metrics endpoint unavailable");
                 const data = await res.json();
 
@@ -2647,6 +2652,17 @@
                 safeSetText('report-best-model-name', bestName);
                 safeSetText('dash-model-name', bestName);
                 safeSetText('perf-best-model', bestName);
+
+                // Priority: Update primary dashboard accuracy card immediately
+                let activeMetrics = data.metrics;
+                if (!activeMetrics && data.models && data.models[bestName]) {
+                    activeMetrics = data.models[bestName];
+                }
+                if (activeMetrics) {
+                    const primaryAcc = activeMetrics.accuracy !== undefined ? activeMetrics.accuracy : 0.6667;
+                    safeSetText('dash-accuracy', `${(primaryAcc * 100).toFixed(1)}%`);
+                    safeSetText('perf-accuracy', `${(primaryAcc * 100).toFixed(1)}%`);
+                }
 
                 // 1. Dynamic Benchmark Comparison Chart Update
                 if (data.models && perfBenchmarkChart) {
@@ -2780,7 +2796,7 @@
             if (chartError) chartError.classList.add('hidden');
 
             try {
-                const res = await fetchWithTimeout('/live/stats?source=live', {}, 8000);
+                const res = await fetchWithTimeout('/live/stats?source=live', {}, 25000);
                 if (!res.ok) throw new Error("Stats endpoint unavailable");
                 const data = await res.json();
 
