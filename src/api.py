@@ -95,14 +95,17 @@ async def lifespan(app: FastAPI):
         model_state["metrics"] = meta.get("metrics", {})
         
         # Warmup NLTK and model inference to avoid first-call cold-start overhead
-        _ = clean_text("Warmup initial text load")
-        if model_state["type"] == "sklearn":
-            _ = model_state["model"].predict_proba(model_state["vectorizer"].transform(["warmup"]).toarray())
-        elif model_state["type"] == "transformer":
-            import torch
-            inputs = model_state["tokenizer"]("Warmup initial text load", max_length=64, padding=True, truncation=True, return_tensors="pt")
-            with torch.no_grad():
-                _ = model_state["model"](**inputs)
+        try:
+            _ = clean_text("Warmup initial text load")
+            if model_state["type"] == "sklearn":
+                _ = model_state["model"].predict_proba(model_state["vectorizer"].transform(["warmup"]).toarray())
+            elif model_state["type"] == "transformer":
+                import torch
+                inputs = model_state["tokenizer"]("Warmup initial text load", max_length=64, padding=True, truncation=True, return_tensors="pt")
+                with torch.no_grad():
+                    _ = model_state["model"](**inputs)
+        except Exception as w_err:
+            print(f"[API Warning] Warmup inference skipped: {w_err}")
         
         print(f"[API] Successfully loaded best model '{best_name}' ({model_type}).")
 
