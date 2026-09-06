@@ -2223,9 +2223,13 @@
         // -------------------------------------------------------------
         function getApiBase() {
             const custom = localStorage.getItem('SENTIMENTSCOPE_API_URL');
-            // Clear legacy stale provider URLs if not custom user input
+            // If stored URL was set to Vercel origin fallback or old non-existent Render URL, clear it
             if (custom && custom.trim()) {
-                return custom.trim().replace(/\/+$/, '');
+                if ((custom.trim() === window.location.origin && window.location.protocol !== 'file:') || custom.includes('sentimentscope-api.onrender.com')) {
+                    localStorage.removeItem('SENTIMENTSCOPE_API_URL');
+                } else {
+                    return custom.trim().replace(/\/+$/, '');
+                }
             }
             if (window.ENV_API_URL && window.ENV_API_URL.trim()) return window.ENV_API_URL.trim().replace(/\/+$/, '');
             const metaUrl = document.querySelector('meta[name="api-base-url"]')?.getAttribute('content');
@@ -2233,8 +2237,8 @@
             if (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                 return 'http://127.0.0.1:8000';
             }
-            // Default to Render backend service when hosted on Vercel or cloud CDN
-            return 'https://sentimentscope-api.onrender.com';
+            // Default to live Render backend service URL when hosted on Vercel or cloud CDN
+            return 'https://sentimentscope-api-nj7l.onrender.com';
         }
 
         function setApiBase(url) {
@@ -3049,7 +3053,7 @@
 
                 <!-- Presets -->
                 <div class="flex flex-wrap gap-2 pt-1">
-                    <button type="button" onclick="setApiInput('https://sentimentscope-api.onrender.com')" class="px-2.5 py-1 rounded-lg glass-inner hover:border-primary/40 text-on-surface-variant hover:text-primary text-[11px] transition-all flex items-center gap-1">
+                    <button type="button" onclick="setApiInput('https://sentimentscope-api-nj7l.onrender.com')" class="px-2.5 py-1 rounded-lg glass-inner hover:border-primary/40 text-on-surface-variant hover:text-primary text-[11px] transition-all flex items-center gap-1">
                         <span class="material-symbols-outlined text-[12px] text-emerald-400">cloud</span> Render Backend
                     </button>
                     <button type="button" onclick="setApiInput('http://127.0.0.1:8000')" class="px-2.5 py-1 rounded-lg glass-inner hover:border-primary/40 text-on-surface-variant hover:text-primary text-[11px] transition-all flex items-center gap-1">

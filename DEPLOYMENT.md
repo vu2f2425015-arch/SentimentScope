@@ -57,7 +57,7 @@ services:
         value: data/rolling_store.db
 ```
 5. Click **Apply**. Render will automatically build the Docker container and deploy your FastAPI service!
-6. Once deployed, copy your Render web service URL (e.g., `https://sentimentscope-api.onrender.com`).
+6. Once deployed, copy your Render web service URL (e.g., `https://sentimentscope-api-nj7l.onrender.com`).
 
 ---
 
@@ -78,7 +78,7 @@ services:
 In Vercel Project Settings -> **Environment Variables**, add:
 | Key | Value |
 | :--- | :--- |
-| `ENV_API_URL` | `https://sentimentscope-api.onrender.com` *(your Render web service URL)* |
+| `ENV_API_URL` | `https://sentimentscope-api-nj7l.onrender.com` *(your Render web service URL)* |
 
 ---
 
@@ -94,7 +94,7 @@ In Vercel Project Settings -> **Environment Variables**, add:
 ### 1. Render API & Model Loading Verification
 Execute `curl` against your Render deployment domain:
 ```bash
-curl -X GET "https://sentimentscope-api.onrender.com/health"
+curl -X GET "https://sentimentscope-api-nj7l.onrender.com/health"
 ```
 **Expected Response:**
 ```json
@@ -108,7 +108,7 @@ curl -X GET "https://sentimentscope-api.onrender.com/health"
 
 Verify interactive API documentation:
 ```
-https://sentimentscope-api.onrender.com/docs
+https://sentimentscope-api-nj7l.onrender.com/docs
 ```
 
 ### 2. CORS Verification from Vercel Frontend
