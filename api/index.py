@@ -12,12 +12,10 @@ if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
 # Environment overrides for Vercel serverless environment
-os.environ.setdefault("MODELS_DIR", os.path.join(root_dir, "models"))
-os.environ.setdefault("REPORTS_DIR", os.path.join(root_dir, "reports"))
-os.environ.setdefault("INGESTION_DB_PATH", "/tmp/rolling_store.db")
-os.environ.setdefault("ENABLE_LIVE_INGESTION", "false")
+os.environ["MODELS_DIR"] = os.path.join(root_dir, "models")
+os.environ["REPORTS_DIR"] = os.path.join(root_dir, "reports")
+os.environ["INGESTION_DB_PATH"] = "/tmp/rolling_store.db"
+os.environ["ENABLE_LIVE_INGESTION"] = "false"
 
-try:
-    from backend.src.api import app
-except ImportError:
-    from src.api import app
+# Top-level ASGI app import for Vercel static AST analysis
+from backend.src.api import app

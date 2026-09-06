@@ -1,68 +1,19 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "frontend/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/health",
-      "dest": "api/index.py"
-    },
-    {
-      "src": "/api/predict/(.*)",
-      "dest": "api/index.py"
-    },
-    {
-      "src": "/api/predict",
-      "dest": "api/index.py"
-    },
-    {
-      "src": "/api/live/(.*)",
-      "dest": "api/index.py"
-    },
-    {
-      "src": "/api/model/(.*)",
-      "dest": "api/index.py"
-    },
-    {
-      "src": "/health",
-      "dest": "api/index.py"
-    },
-    {
-      "src": "/predict/(.*)",
-      "dest": "api/index.py"
-    },
-    {
-      "src": "/predict",
-      "dest": "api/index.py"
-    },
-    {
-      "src": "/live/(.*)",
-      "dest": "api/index.py"
-    },
-    {
-      "src": "/model/(.*)",
-      "dest": "api/index.py"
-    },
-    {
-      "src": "/docs",
-      "dest": "api/index.py"
-    },
-    {
-      "src": "/openapi.json",
-      "dest": "api/index.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "frontend/$1"
-    }
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/api/health", "destination": "/api/index.py" },
+    { "source": "/api/predict/(.*)", "destination": "/api/index.py" },
+    { "source": "/api/predict", "destination": "/api/index.py" },
+    { "source": "/api/live/(.*)", "destination": "/api/index.py" },
+    { "source": "/api/model/(.*)", "destination": "/api/index.py" },
+    { "source": "/health", "destination": "/api/index.py" },
+    { "source": "/predict/(.*)", "destination": "/api/index.py" },
+    { "source": "/predict", "destination": "/api/index.py" },
+    { "source": "/live/(.*)", "destination": "/api/index.py" },
+    { "source": "/model/(.*)", "destination": "/api/index.py" },
+    { "source": "/docs", "destination": "/api/index.py" },
+    { "source": "/openapi.json", "destination": "/api/index.py" },
+    { "source": "/(.*)", "destination": "/frontend/$1" }
   ],
   "headers": [
     {
