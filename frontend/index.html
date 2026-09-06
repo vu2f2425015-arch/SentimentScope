@@ -2223,7 +2223,12 @@
         // -------------------------------------------------------------
         function getApiBase() {
             const custom = localStorage.getItem('SENTIMENTSCOPE_API_URL');
-            if (custom && custom.trim()) return custom.trim().replace(/\/+$/, '');
+            // If browser stored an old dead Render URL from previous sessions, clear it so it auto-uses Vercel API
+            if (custom && (custom.includes('onrender.com') || custom.includes('sentimentscope-iz3a'))) {
+                localStorage.removeItem('SENTIMENTSCOPE_API_URL');
+            } else if (custom && custom.trim()) {
+                return custom.trim().replace(/\/+$/, '');
+            }
             if (window.ENV_API_URL && window.ENV_API_URL.trim()) return window.ENV_API_URL.trim().replace(/\/+$/, '');
             if (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                 return 'http://127.0.0.1:8000';
@@ -2233,7 +2238,7 @@
         }
 
         function setApiBase(url) {
-            if (!url || !url.trim()) {
+            if (!url || !url.trim() || url === window.location.origin) {
                 localStorage.removeItem('SENTIMENTSCOPE_API_URL');
             } else {
                 localStorage.setItem('SENTIMENTSCOPE_API_URL', url.trim().replace(/\/+$/, ''));
@@ -2265,12 +2270,32 @@
             const ind = document.getElementById('health-indicator');
             const banner = document.getElementById('backend-offline-banner');
             const targetEl = document.getElementById('offline-target-url');
-            const activeUrl = getApiBase();
+            let activeUrl = getApiBase();
             if (targetEl) targetEl.innerText = activeUrl;
 
             const startPing = performance.now();
             try {
-                const res = await fetchWithTimeout('/health', {}, 6000);
+                let res;
+                try {
+                    res = await fetchWithTimeout('/health', {}, 5000);
+                } catch (firstErr) {
+                    // Fallback attempt to window.location.origin if custom URL failed
+                    if (activeUrl !== window.location.origin && window.location.protocol !== 'file:') {
+                        console.warn("Primary API base failed, attempting same-origin fallback:", window.location.origin);
+                        const fallbackUrl = `${window.location.origin}/health`;
+                        res = await fetch(fallbackUrl);
+                        if (res.ok) {
+                            setApiBase(window.location.origin);
+                            activeUrl = window.location.origin;
+                            if (targetEl) targetEl.innerText = activeUrl;
+                        } else {
+                            throw firstErr;
+                        }
+                    } else {
+                        throw firstErr;
+                    }
+                }
+
                 const latencyMs = Math.round(performance.now() - startPing);
                 if (!res.ok) throw new Error("Status: " + res.status);
                 const data = await res.json();
