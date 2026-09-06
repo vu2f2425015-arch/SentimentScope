@@ -2,10 +2,7 @@
   "outputDirectory": "frontend",
   "cleanUrls": true,
   "functions": {
-    "api/*.py": {
-      "includeFiles": "models/**"
-    },
-    "frontend/api/*.py": {
+    "api/index.py": {
       "includeFiles": "models/**"
     }
   },

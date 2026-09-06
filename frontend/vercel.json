@@ -1,7 +1,7 @@
 {
   "cleanUrls": true,
   "functions": {
-    "api/*.py": {
+    "api/index.py": {
       "includeFiles": "../models/**"
     }
   },
