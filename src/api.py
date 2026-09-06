@@ -129,8 +129,10 @@ app = FastAPI(
 )
 
 # Configurable CORS via environment variable ALLOWED_ORIGINS
-raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000,null,*")
-if raw_origins.strip() == "*":
+raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000,http://localhost:3000,http://127.0.0.1:3000,*")
+is_wildcard = "*" in [o.strip() for o in raw_origins.split(",")]
+
+if is_wildcard:
     origins = ["*"]
 else:
     origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
@@ -138,7 +140,8 @@ else:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
+    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_credentials=False if is_wildcard else True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -309,9 +312,13 @@ def root():
             }
         )
     return {
-        "status": "ok",
+        "status": "online",
         "app": "SentimentScope API",
-        "loaded_model": model_state.get("name", "None loaded")
+        "version": "1.0.0",
+        "loaded_model": model_state.get("name", "None loaded"),
+        "docs_url": "/docs",
+        "health_url": "/health",
+        "predict_url": "/predict"
     }
 
 

@@ -1,0 +1,52 @@
+{
+  "health": {
+    "status": "healthy",
+    "model_loaded": true,
+    "model_name": "DistilBERT (Full Dataset)",
+    "version": "1.0.0"
+  },
+  "negation_tests": {
+    "not so good": {
+      "text": "not so good",
+      "cleaned_text": "not so good",
+      "sentiment": "negative",
+      "confidence": 0.7697,
+      "probabilities": {
+        "negative": 0.7697,
+        "neutral": 0.1382,
+        "positive": 0.0921
+      },
+      "latency_ms": 123.54,
+      "pipeline_model": "DistilBERT (Full Dataset)",
+      "tokenizer_type": "WordPiece Tokenizer (DistilBERT)"
+    },
+    "not bad at all": {
+      "text": "not bad at all",
+      "cleaned_text": "not bad at all",
+      "sentiment": "positive",
+      "confidence": 0.4986,
+      "probabilities": {
+        "negative": 0.2337,
+        "neutral": 0.2677,
+        "positive": 0.4986
+      },
+      "latency_ms": 76.23,
+      "pipeline_model": "DistilBERT (Full Dataset)",
+      "tokenizer_type": "WordPiece Tokenizer (DistilBERT)"
+    },
+    "its not so good not so bad": {
+      "text": "its not so good not so bad",
+      "cleaned_text": "its not so good not so bad",
+      "sentiment": "negative",
+      "confidence": 0.7712,
+      "probabilities": {
+        "negative": 0.7712,
+        "neutral": 0.1405,
+        "positive": 0.0882
+      },
+      "latency_ms": 112.07,
+      "pipeline_model": "DistilBERT (Full Dataset)",
+      "tokenizer_type": "WordPiece Tokenizer (DistilBERT)"
+    }
+  }
+}

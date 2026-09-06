@@ -3,8 +3,6 @@ import joblib
 import numpy as np
 from typing import Tuple
 from sklearn.feature_extraction.text import TfidfVectorizer
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 MODELS_DIR = os.path.join("models")
 
@@ -46,16 +44,19 @@ class SequentialExtractor:
     Keras Tokenizer and padded sequence extractor for LSTM / Bi-LSTM path.
     """
     def __init__(self, num_words: int = 10000, max_len: int = 150):
+        from tensorflow.keras.preprocessing.text import Tokenizer
         self.num_words = num_words
         self.max_len = max_len
         self.tokenizer = Tokenizer(num_words=self.num_words, oov_token="<OOV>")
 
     def fit_transform(self, texts: list) -> np.ndarray:
+        from tensorflow.keras.preprocessing.sequence import pad_sequences
         self.tokenizer.fit_on_texts(texts)
         sequences = self.tokenizer.texts_to_sequences(texts)
         return pad_sequences(sequences, maxlen=self.max_len, padding="post", truncating="post")
 
     def transform(self, texts: list) -> np.ndarray:
+        from tensorflow.keras.preprocessing.sequence import pad_sequences
         sequences = self.tokenizer.texts_to_sequences(texts)
         return pad_sequences(sequences, maxlen=self.max_len, padding="post", truncating="post")
 

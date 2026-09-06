@@ -1,0 +1,14 @@
+{
+  "name": "sentimentscope-frontend",
+  "version": "1.0.0",
+  "description": "SentimentScope Web UI — Real-time 3-class sentiment intelligence and telemetry",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve -l 3000 .",
+    "start": "npx serve -l 3000 .",
+    "build": "echo 'Frontend static build complete'"
+  },
+  "keywords": ["sentiment-analysis", "fastapi", "machine-learning", "vercel"],
+  "author": "",
+  "license": "MIT"
+}

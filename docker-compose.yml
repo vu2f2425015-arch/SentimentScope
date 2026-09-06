@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  web:
+  backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: sentimentscope_api
     ports:
@@ -13,7 +13,7 @@ services:
       - PYTHONUNBUFFERED=1
       - MODELS_DIR=models
       - REPORTS_DIR=reports
-      - ALLOWED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000,*
+      - ALLOWED_ORIGINS=*
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 15s

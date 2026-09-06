@@ -1,0 +1,3045 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>SentimentScope - AI Sentiment Intelligence Platform</title>
+    <meta name="description" content="Production 3-class sentiment intelligence, interactive real-time telemetry, and model performance matrix."/>
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <!-- Chart.js for Data Visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Google Fonts & Material Symbols -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+    <!-- Tailwind Config -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "var(--color-primary)",
+                        "primary-hover": "var(--color-primary-hover)",
+                        "tertiary": "var(--color-tertiary)",
+                        "surface": "var(--bg-surface)",
+                        "card": "var(--bg-card)",
+                        "card-border": "var(--border-card)",
+                        "background": "var(--bg-app)",
+                        "on-background": "var(--text-main)",
+                        "on-surface-variant": "var(--text-muted)",
+                        "error": "var(--color-error)",
+                        "success": "var(--color-success)",
+                        "warning": "var(--color-warning)"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.85rem",
+                        "xl": "1.25rem",
+                        "2xl": "1.75rem",
+                        "3xl": "2.25rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        headline: ["Plus Jakarta Sans", "sans-serif"],
+                        body: ["Plus Jakarta Sans", "sans-serif"],
+                        mono: ["JetBrains Mono", "monospace"]
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 2.5s infinite ease-in-out',
+                        'float-slow': 'floatSlow 6s ease-in-out infinite',
+                        'gradient-shift': 'gradientShift 8s ease infinite'
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%, 100%': { opacity: '0.6', filter: 'drop-shadow(0 0 8px rgba(99, 102, 241, 0.4))' },
+                            '50%': { opacity: '1', filter: 'drop-shadow(0 0 16px rgba(99, 102, 241, 0.8))' }
+                        },
+                        floatSlow: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-6px)' }
+                        },
+                        gradientShift: {
+                            '0%': { 'background-position': '0% 50%' },
+                            '50%': { 'background-position': '100% 50%' },
+                            '100%': { 'background-position': '0% 50%' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-app: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --bg-card-hover: rgba(255, 255, 255, 0.95);
+            --bg-inner: rgba(241, 245, 249, 0.7);
+            --border-card: rgba(226, 232, 240, 0.8);
+            --border-card-hover: rgba(99, 102, 241, 0.3);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --color-primary: #4f46e5;
+            --color-primary-hover: #4338ca;
+            --color-tertiary: #7c3aed;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-error: #ef4444;
+            --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+            --shadow-glow: 0 0 20px rgba(79, 70, 229, 0.15);
+        }
+
+        .dark {
+            --bg-app: #120e24;
+            --bg-surface: #17142e;
+            --bg-card: rgba(22, 18, 44, 0.68);
+            --bg-card-hover: rgba(32, 26, 62, 0.82);
+            --bg-inner: rgba(18, 15, 38, 0.72);
+            --border-card: rgba(255, 255, 255, 0.12);
+            --border-card-hover: rgba(168, 85, 247, 0.45);
+            --text-main: #f8fafc;
+            --text-muted: #a78bfa;
+            --color-primary: #a855f7;
+            --color-primary-hover: #9333ea;
+            --color-tertiary: #c084fc;
+            --color-success: #34d399;
+            --color-warning: #fbbf24;
+            --color-error: #f87171;
+            --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.15);
+            --shadow-glow: 0 0 30px rgba(168, 85, 247, 0.35);
+        }
+
+        /* Ambient Background Glow Orbs for High Contrast Depth */
+        .ambient-glow-orb {
+            position: fixed;
+            border-radius: 9999px;
+            pointer-events: none;
+            z-index: -15;
+            filter: blur(120px);
+            opacity: 0.65;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        /* Glowing Text Utilities & High Contrast Visibility */
+        .glow-text-headline {
+            text-shadow: 0 0 24px rgba(168, 85, 247, 0.6), 0 0 48px rgba(99, 102, 241, 0.35);
+        }
+        .glow-text-primary {
+            text-shadow: 0 0 18px rgba(168, 85, 247, 0.6);
+        }
+        .glow-text-success {
+            text-shadow: 0 0 18px rgba(52, 211, 153, 0.6);
+        }
+        .glow-text-warning {
+            text-shadow: 0 0 18px rgba(251, 191, 36, 0.6);
+        }
+        .glow-text-error {
+            text-shadow: 0 0 18px rgba(248, 113, 113, 0.6);
+        }
+
+        /* Dynamic Animated Shifting Gradient Text */
+        .animate-gradient-text {
+            background: linear-gradient(135deg, #c084fc 0%, #818cf8 35%, #f472b6 70%, #c084fc 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientTextShift 6s linear infinite;
+        }
+        @keyframes gradientTextShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Enhanced Glass Card Visibility & Glow Borders */
+        .dark .glass-card {
+            background-color: rgba(22, 18, 44, 0.68);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+        .light .glass-card {
+            background-color: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow: 0 10px 28px -5px rgba(0, 0, 0, 0.05), 0 0 1px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-app);
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background-color: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-card);
+            box-shadow: var(--shadow-card);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card-interactive {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card-interactive:hover {
+            border-color: var(--border-card-hover);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+
+        .glass-inner {
+            background-color: var(--bg-inner);
+            border: 1px solid var(--border-card);
+        }
+
+        /* Skeleton Loading Shimmer */
+        .skeleton-shimmer {
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(99,102,241,0.12) 50%, rgba(255,255,255,0) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Entrance Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Material Symbol Icon Fix */
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-fast {
+            animation: spin 0.6s linear infinite;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-app);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 4px;
+            opacity: 0.4;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            opacity: 0.8;
+        }
+
+        /* High Contrast Input & Form Control Visibility in Dark & Light Modes */
+        input[type="text"], input[type="search"], textarea, select {
+            color: var(--text-main) !important;
+            background-color: var(--bg-inner) !important;
+            border-color: var(--border-card) !important;
+        }
+        .dark input[type="text"], .dark input[type="search"], .dark textarea, .dark select {
+            color: #f8fafc !important;
+            background-color: rgba(24, 20, 48, 0.95) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+        .dark input::placeholder, .dark textarea::placeholder {
+            color: #94a3b8 !important;
+            opacity: 0.8;
+        }
+        input::placeholder, textarea::placeholder {
+            color: #64748b;
+            opacity: 0.8;
+        }
+
+        /* Accessible Focus Outlines */
+        a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex text-on-background selection:bg-indigo-500/20 selection:text-indigo-400">
+
+    <!-- Ambient Background Glow Orbs for High Contrast Depth -->
+    <div class="ambient-glow-orb top-10 left-1/4 w-[500px] h-[500px] bg-purple-600/30 dark:bg-purple-600/35 animate-float-slow" aria-hidden="true"></div>
+    <div class="ambient-glow-orb bottom-10 right-1/4 w-[500px] h-[500px] bg-indigo-600/25 dark:bg-indigo-600/30 animate-pulse-glow" aria-hidden="true"></div>
+    <div class="ambient-glow-orb top-1/2 right-1/3 w-[400px] h-[400px] bg-pink-600/20 dark:bg-pink-600/25" aria-hidden="true"></div>
+
+    <!-- WebGL Background Canvas (Decorative Animated Mesh) -->
+    <div class="fixed inset-0 w-full h-full -z-10" id="shader-container" aria-hidden="true">
+        <canvas id="shader-canvas" class="w-full h-full block opacity-95 dark:opacity-95"></canvas>
+    </div>
+
+    <!-- Side Navigation Bar (Desktop) -->
+    <nav class="hidden md:flex h-screen w-64 fixed left-0 top-0 flex-col p-6 z-50 glass-card rounded-r-3xl border-r border-y-0 border-l-0" aria-label="Main Navigation">
+        <!-- Brand Header -->
+        <div class="mb-8 flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-0.5 shadow-lg shadow-indigo-500/20 flex items-center justify-center">
+                <div class="w-full h-full bg-slate-950 rounded-[0.9rem] flex items-center justify-center text-white">
+                    <span class="material-symbols-outlined fill text-2xl text-indigo-400 glow-text-primary">bubble_chart</span>
+                </div>
+            </div>
+            <div>
+                <h1 class="text-lg font-headline font-extrabold animate-gradient-text glow-text-headline tracking-tight">SentimentScope</h1>
+                <p class="text-[11px] text-on-surface-variant font-medium tracking-wide">AI Analytics Engine</p>
+            </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <div class="flex-1 space-y-2" id="nav-links" role="tablist" aria-label="Dashboard Navigation">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" role="tab" aria-selected="true" aria-controls="view-dashboard" class="w-full min-h-[44px] flex items-center gap-3.5 px-4 py-3 rounded-xl text-primary bg-indigo-500/10 font-bold transition-all border border-indigo-500/20 shadow-sm focus-visible:ring-2 focus-visible:ring-primary">
+                <span class="material-symbols-outlined text-indigo-400">dashboard</span>
+                <span class="font-body text-sm">Dashboard</span>
+            </button>
+            <button onclick="switchTab('single')" id="nav-single" role="tab" aria-selected="false" aria-controls="view-single" class="w-full min-h-[44px] flex items-center gap-3.5 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-indigo-500/5 font-medium transition-all focus-visible:ring-2 focus-visible:ring-primary">
+                <span class="material-symbols-outlined">psychology</span>
+                <span class="font-body text-sm">Single Analysis</span>
+            </button>
+            <button onclick="switchTab('batch')" id="nav-batch" role="tab" aria-selected="false" aria-controls="view-batch" class="w-full min-h-[44px] flex items-center gap-3.5 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-indigo-500/5 font-medium transition-all focus-visible:ring-2 focus-visible:ring-primary">
+                <span class="material-symbols-outlined">cloud_upload</span>
+                <span class="font-body text-sm">Batch Upload</span>
+            </button>
+            <button onclick="switchTab('performance')" id="nav-performance" role="tab" aria-selected="false" aria-controls="view-performance" class="w-full min-h-[44px] flex items-center gap-3.5 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-indigo-500/5 font-medium transition-all focus-visible:ring-2 focus-visible:ring-primary">
+                <span class="material-symbols-outlined">speed</span>
+                <span class="font-body text-sm">Performance Matrix</span>
+            </button>
+            <button onclick="switchTab('reports')" id="nav-reports" role="tab" aria-selected="false" aria-controls="view-reports" class="w-full min-h-[44px] flex items-center gap-3.5 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-indigo-500/5 font-medium transition-all focus-visible:ring-2 focus-visible:ring-primary">
+                <span class="material-symbols-outlined">analytics</span>
+                <span class="font-body text-sm">Model Reports</span>
+            </button>
+        </div>
+
+        <!-- Bottom Controls & Theme Switcher -->
+        <div class="mt-auto pt-4 space-y-3 border-t border-card-border">
+            <button onclick="toggleDarkMode()" id="theme-toggle-desktop" class="w-full min-h-[44px] glass-inner px-4 py-2.5 rounded-xl flex items-center justify-between text-xs font-semibold text-on-background hover:text-primary transition-all focus-visible:ring-2 focus-visible:ring-primary" aria-label="Toggle light and dark themes">
+                <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-base text-primary" id="theme-icon-desktop">light_mode</span>
+                    <span id="theme-text-desktop">Light Theme</span>
+                </span>
+                <span class="material-symbols-outlined text-xs text-on-surface-variant">swap_horiz</span>
+            </button>
+
+            <!-- Health Status Badge & Settings Trigger -->
+            <button onclick="openApiConfigModal()" class="glass-inner p-3 rounded-xl flex items-center justify-between w-full hover:border-indigo-500/40 transition-all cursor-pointer group text-left focus-visible:ring-2 focus-visible:ring-primary" aria-label="Backend API Connection Settings" title="Click to view and configure backend API connection">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse-glow" id="health-indicator"></span>
+                    <span class="text-xs font-semibold text-on-surface-variant group-hover:text-primary transition-colors" id="health-text">API Online</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold px-2 py-0.5 rounded-full" id="model-badge">v1.0.0</span>
+                    <span class="material-symbols-outlined text-xs text-on-surface-variant group-hover:text-primary transition-colors">tune</span>
+                </div>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 ml-0 md:ml-64 p-4 md:p-8 flex flex-col min-h-screen max-w-7xl mx-auto w-full">
+        
+        <!-- Mobile Top Navigation Header -->
+        <header class="md:hidden flex justify-between items-center w-full px-4 py-3 mb-6 sticky top-0 z-40 glass-card rounded-2xl">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 p-0.5 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-white text-lg fill">bubble_chart</span>
+                </div>
+                <span class="text-base font-headline font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">SentimentScope</span>
+            </div>
+            
+            <div class="flex items-center gap-1" role="tablist" aria-label="Mobile Navigation">
+                <button onclick="switchTab('dashboard')" class="p-2.5 min-h-[44px] min-w-[44px] text-on-surface-variant hover:text-primary flex items-center justify-center rounded-xl" aria-label="Dashboard View" title="Dashboard"><span class="material-symbols-outlined text-xl">dashboard</span></button>
+                <button onclick="switchTab('single')" class="p-2.5 min-h-[44px] min-w-[44px] text-on-surface-variant hover:text-primary flex items-center justify-center rounded-xl" aria-label="Single Analysis View" title="Single Analysis"><span class="material-symbols-outlined text-xl">psychology</span></button>
+                <button onclick="switchTab('batch')" class="p-2.5 min-h-[44px] min-w-[44px] text-on-surface-variant hover:text-primary flex items-center justify-center rounded-xl" aria-label="Batch Upload View" title="Batch Upload"><span class="material-symbols-outlined text-xl">cloud_upload</span></button>
+                <button onclick="switchTab('performance')" class="p-2.5 min-h-[44px] min-w-[44px] text-on-surface-variant hover:text-primary flex items-center justify-center rounded-xl" aria-label="Performance Matrix View" title="Performance Matrix"><span class="material-symbols-outlined text-xl">speed</span></button>
+                <button onclick="switchTab('reports')" class="p-2.5 min-h-[44px] min-w-[44px] text-on-surface-variant hover:text-primary flex items-center justify-center rounded-xl" aria-label="Model Reports View" title="Model Reports"><span class="material-symbols-outlined text-xl">analytics</span></button>
+                <button onclick="toggleDarkMode()" class="p-2.5 min-h-[44px] min-w-[44px] text-primary flex items-center justify-center rounded-xl" aria-label="Toggle Theme" title="Toggle Theme"><span class="material-symbols-outlined text-xl" id="theme-icon-mobile">light_mode</span></button>
+            </div>
+        </header>
+
+        <!-- Backend Offline Notice Banner -->
+        <div id="backend-offline-banner" class="hidden glass-card border border-rose-500/40 bg-rose-500/10 p-4 rounded-2xl mb-6 flex flex-wrap items-center justify-between gap-3 text-sm">
+            <div class="flex items-center gap-3 text-rose-300">
+                <span class="material-symbols-outlined text-rose-400 text-2xl">cloud_off</span>
+                <div>
+                    <strong class="font-bold text-rose-200">Backend Server Offline or Disconnected</strong>
+                    <p class="text-xs text-rose-300/80 mt-0.5">Attempting connection to <code class="bg-black/30 px-1.5 py-0.5 rounded text-[11px] font-mono text-indigo-300" id="offline-target-url">http://127.0.0.1:8000</code>. If deployed on Render, verify instance health.</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="openApiConfigModal()" class="px-3 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200 border border-indigo-500/40 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all">
+                    <span class="material-symbols-outlined text-sm">settings</span> Change Backend URL
+                </button>
+                <button onclick="initApp()" class="px-3.5 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 active:scale-95 text-rose-100 border border-rose-500/40 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all">
+                    <span class="material-symbols-outlined text-sm">refresh</span> Reconnect Now
+                </button>
+            </div>
+        </div>
+
+        <!-- Dynamic View Containers -->
+        
+        <!-- 1. DASHBOARD VIEW -->
+        <section id="view-dashboard" role="tabpanel" aria-labelledby="nav-dashboard" class="space-y-8 animate-fade-in-up">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-headline font-extrabold text-on-background tracking-tight">Analytics Dashboard</h2>
+                    <p class="text-on-surface-variant text-sm mt-1">Real-time 3-class sentiment intelligence and interactive visual telemetry.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold glass-inner text-indigo-400 border border-indigo-500/20">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                        Live Telemetry Active
+                    </span>
+                </div>
+            </div>
+
+            <!-- Top KPI Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="glass-card glass-card-interactive p-6 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                        <span class="material-symbols-outlined text-2xl">model_training</span>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Active Model</p>
+                        <p class="text-base font-extrabold text-on-background mt-0.5 truncate" id="dash-model-name">Loading...</p>
+                    </div>
+                </div>
+
+                <div class="glass-card glass-card-interactive p-6 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                        <span class="material-symbols-outlined text-2xl">verified</span>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Test Accuracy</p>
+                        <p class="text-2xl font-headline font-extrabold text-on-background" id="dash-accuracy">--</p>
+                    </div>
+                </div>
+
+                <div class="glass-card glass-card-interactive p-6 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
+                        <span class="material-symbols-outlined text-2xl">speed</span>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Avg Latency</p>
+                        <p class="text-2xl font-headline font-extrabold text-on-background" id="dash-latency">~4.5ms</p>
+                    </div>
+                </div>
+
+                <div class="glass-card glass-card-interactive p-6 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
+                        <span class="material-symbols-outlined text-2xl">category</span>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Classification</p>
+                        <p class="text-sm font-extrabold text-on-background mt-0.5">3-Class (Pos/Neu/Neg)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Main Content Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Quick Test Widget -->
+                <div class="lg:col-span-7 glass-card p-6 md:p-8 rounded-3xl space-y-6 flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-headline font-bold text-lg text-on-background flex items-center gap-2">
+                                <span class="material-symbols-outlined text-indigo-400">auto_awesome</span>
+                                Quick Prediction Test
+                            </h3>
+                            <span class="text-xs text-on-surface-variant font-medium">FastAPI Endpoint</span>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <label for="dash-quick-input" class="sr-only">Quick sentiment text input</label>
+                            <textarea id="dash-quick-input" rows="3" class="w-full glass-inner rounded-2xl p-4 text-on-background text-sm focus:outline-none resize-none font-body border border-card-border focus:border-indigo-500/50 transition-all" placeholder="Type or paste text to test sentiment prediction (e.g. 'The customer service was amazingly helpful and fast!')..."></textarea>
+                            
+                            <div class="flex justify-between items-center flex-wrap gap-3">
+                                <div class="flex gap-2 flex-wrap" role="group" aria-label="Sample test text choices">
+                                    <button onclick="setSampleText('This product is outstanding, exceeding all my expectations!')" class="text-xs glass-card min-h-[44px] px-3.5 py-2 rounded-xl text-on-surface-variant hover:text-indigo-400 font-semibold glass-card-interactive focus-visible:ring-2 focus-visible:ring-primary">Positive Sample</button>
+                                    <button onclick="setSampleText('The delivery arrived on Tuesday as scheduled.')" class="text-xs glass-card min-h-[44px] px-3.5 py-2 rounded-xl text-on-surface-variant hover:text-indigo-400 font-semibold glass-card-interactive focus-visible:ring-2 focus-visible:ring-primary">Neutral Sample</button>
+                                    <button onclick="setSampleText('Disappointing quality, broke within two days of usage.')" class="text-xs glass-card min-h-[44px] px-3.5 py-2 rounded-xl text-on-surface-variant hover:text-indigo-400 font-semibold glass-card-interactive focus-visible:ring-2 focus-visible:ring-primary">Negative Sample</button>
+                                </div>
+                                <button onclick="runQuickPredict()" id="dash-quick-btn" class="min-h-[44px] bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary">
+                                    <span class="material-symbols-outlined text-base">send</span>
+                                    Test Sentiment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Result Box -->
+                    <div id="dash-quick-result" class="hidden glass-inner p-5 rounded-2xl space-y-3" aria-live="polite">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Prediction Outcome</span>
+                            <span id="dash-res-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">POSITIVE</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-center pt-2 border-t border-card-border">
+                            <div>
+                                <p class="text-[10px] text-on-surface-variant font-bold">Positive</p>
+                                <p id="dash-prob-pos" class="text-sm font-extrabold text-emerald-400">0.0%</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-on-surface-variant font-bold">Neutral</p>
+                                <p id="dash-prob-neu" class="text-sm font-extrabold text-amber-400">0.0%</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-on-surface-variant font-bold">Negative</p>
+                                <p id="dash-prob-neg" class="text-sm font-extrabold text-rose-400">0.0%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Sentiment Visual Analytics Chart -->
+                <div class="lg:col-span-5 glass-card p-6 md:p-8 rounded-3xl flex flex-col justify-between space-y-4 relative group">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-headline font-bold text-lg text-on-background flex items-center gap-2">
+                            <span class="material-symbols-outlined text-indigo-400">donut_large</span>
+                            Sentiment Distribution
+                        </h3>
+                        <button onclick="openChartModal('sentiment')" class="text-xs glass-card px-3 py-1.5 rounded-xl text-indigo-400 font-bold flex items-center gap-1.5 glass-card-interactive hover:scale-105 transition-all shadow-sm focus-visible:ring-2 focus-visible:ring-primary" title="Click to open enlarged interactive modal view">
+                            <span class="material-symbols-outlined text-sm">fullscreen</span>
+                            Expand
+                        </button>
+                    </div>
+
+                    <!-- Sentiment Donut Chart Canvas Wrapper -->
+                    <div class="relative w-full flex items-center justify-center cursor-pointer" style="height: 200px" onclick="openChartModal('sentiment')" title="Click to view detailed pop-up chart modal">
+                        <div id="dash-chart-skeleton" class="absolute inset-0 flex flex-col items-center justify-center glass-inner rounded-2xl skeleton-shimmer space-y-2 z-10 hidden">
+                            <span class="material-symbols-outlined text-3xl text-indigo-400 animate-spin-fast">sync</span>
+                            <span class="text-xs text-on-surface-variant font-medium">Fetching telemetry...</span>
+                        </div>
+                        <div id="dash-chart-error" class="absolute inset-0 flex flex-col items-center justify-center glass-inner rounded-2xl space-y-2 z-10 p-4 text-center hidden">
+                            <span class="material-symbols-outlined text-rose-500 text-2xl">error_outline</span>
+                            <p class="text-xs text-on-background font-semibold">Failed to load chart metrics</p>
+                            <button onclick="loadLiveStats()" class="text-xs text-indigo-400 font-bold glass-card px-3 py-1.5 rounded-lg border border-indigo-500/30">Retry</button>
+                        </div>
+                        <!-- Donut Center Text Overlay -->
+                        <div id="donut-center-text" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-[5]">
+                            <span id="donut-center-label" class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Dominant</span>
+                            <span id="donut-center-value" class="text-2xl font-headline font-extrabold text-on-background">--</span>
+                            <span id="donut-center-sentiment" class="text-xs font-bold text-indigo-400 uppercase">No Data</span>
+                        </div>
+                        <canvas id="dash-sentiment-chart" aria-label="Sentiment Distribution Donut Chart" role="img"></canvas>
+                    </div>
+
+                    <!-- Accessible Screen-Reader Summary -->
+                    <div class="sr-only">
+                        <h4>Live Sentiment Proportions Table</h4>
+                        <table>
+                            <tr><th>Sentiment</th><th>Percentage</th></tr>
+                            <tr><td>Positive</td><td id="sr-dash-pos">0%</td></tr>
+                            <tr><td>Neutral</td><td id="sr-dash-neu">0%</td></tr>
+                            <tr><td>Negative</td><td id="sr-dash-neg">0%</td></tr>
+                        </table>
+                    </div>
+
+                    <!-- Live Sentiment Quick Stats Readout -->
+                    <div class="grid grid-cols-3 gap-2 text-center pt-2 border-t border-card-border text-xs">
+                        <div class="p-2 glass-inner rounded-xl cursor-pointer" onclick="openChartModal('sentiment')">
+                            <span class="text-[10px] text-emerald-400 font-bold block uppercase tracking-wider">Positive</span>
+                            <span id="chart-stat-pos" class="font-extrabold text-emerald-400 text-sm">0.0%</span>
+                        </div>
+                        <div class="p-2 glass-inner rounded-xl cursor-pointer" onclick="openChartModal('sentiment')">
+                            <span class="text-[10px] text-amber-400 font-bold block uppercase tracking-wider">Neutral</span>
+                            <span id="chart-stat-neu" class="font-extrabold text-amber-400 text-sm">0.0%</span>
+                        </div>
+                        <div class="p-2 glass-inner rounded-xl cursor-pointer" onclick="openChartModal('sentiment')">
+                            <span class="text-[10px] text-rose-400 font-bold block uppercase tracking-wider">Negative</span>
+                            <span id="chart-stat-neg" class="font-extrabold text-rose-400 text-sm">0.0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-Time Trend Timeline Area Chart -->
+            <div class="glass-card p-6 md:p-8 rounded-3xl space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <h3 class="font-headline font-bold text-lg text-on-background flex items-center gap-2">
+                            <span class="material-symbols-outlined text-purple-400">show_chart</span>
+                            Live Sentiment Trend Timeline
+                        </h3>
+                        <p class="text-xs text-on-surface-variant mt-0.5">Real-time rolling sentiment trajectory across continuous post ingestions.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="openChartModal('timeline')" class="text-xs glass-card px-3 py-1.5 rounded-xl text-purple-400 font-bold flex items-center gap-1.5 glass-card-interactive hover:scale-105 transition-all shadow-sm focus-visible:ring-2 focus-visible:ring-primary" title="Click to open enlarged interactive modal view">
+                            <span class="material-symbols-outlined text-sm">fullscreen</span>
+                            Expand Graph
+                        </button>
+                    </div>
+                </div>
+                <div class="relative w-full h-44 cursor-pointer" onclick="openChartModal('timeline')" title="Click to view detailed pop-up chart modal">
+                    <canvas id="live-timeline-chart" aria-label="Real-time Sentiment Trend Line Chart" role="img"></canvas>
+                </div>
+            </div>
+
+            <!-- Live Ingestion & Telemetry Section -->
+            <div class="glass-card p-6 md:p-8 rounded-3xl space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-headline font-bold text-lg text-on-background flex items-center gap-2" id="telemetry-table-title">
+                            <span class="material-symbols-outlined text-indigo-400" id="telemetry-icon">rss_feed</span>
+                            <span id="telemetry-title-text">Recent Predictions Telemetry</span>
+                            <span id="telemetry-source-badge" class="text-[10px] glass-inner px-3 py-1 rounded-full text-indigo-400 font-bold uppercase border border-indigo-500/20 ml-2">LIVE STREAM</span>
+                        </h3>
+                        <p class="text-xs text-on-surface-variant mt-1 leading-relaxed" id="telemetry-desc-text">Continuous predictions feed from active dataset or background live ingestion.</p>
+                    </div>
+                    
+                    <!-- Keyword Trigger Form -->
+                    <div class="flex items-center gap-3 w-full md:w-auto shrink-0 flex-wrap sm:flex-nowrap">
+                        <label for="live-kw-input" class="sr-only">Search keyword for live post ingestion</label>
+                        <input type="text" id="live-kw-input" class="rounded-xl px-4 py-2.5 text-xs focus:outline-none w-full sm:w-48 font-body border border-card-border focus:border-indigo-500/50 transition-all min-h-[44px]" placeholder="Keyword (e.g. ai, tech)..." value="ai"/>
+                        <button onclick="triggerLiveFetch()" id="live-trigger-btn" class="min-h-[44px] bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 whitespace-nowrap shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary">
+                            <span class="material-symbols-outlined text-sm">sync</span>
+                            Fetch Live Posts
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Telemetry Cards & Confidence Breakdown -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div class="glass-inner p-4 rounded-2xl flex flex-col justify-center">
+                            <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Stored Posts</p>
+                            <p class="text-xl font-headline font-extrabold text-on-background mt-1" id="live-total-cnt">0</p>
+                            <p class="text-[10px] text-on-surface-variant mt-0.5" id="live-pruned-info">Pruned: 0</p>
+                        </div>
+                        <div class="glass-inner p-4 rounded-2xl flex flex-col justify-center">
+                            <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Positive %</p>
+                            <p class="text-xl font-headline font-extrabold text-emerald-400 mt-1" id="live-pos-pct">0.0%</p>
+                            <p class="text-[10px] text-on-surface-variant mt-0.5">Live feed</p>
+                        </div>
+                        <div class="glass-inner p-4 rounded-2xl flex flex-col justify-center">
+                            <p class="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Neutral %</p>
+                            <p class="text-xl font-headline font-extrabold text-amber-400 mt-1" id="live-neu-pct">0.0%</p>
+                            <p class="text-[10px] text-on-surface-variant mt-0.5">Live feed</p>
+                        </div>
+                        <div class="glass-inner p-4 rounded-2xl flex flex-col justify-center">
+                            <p class="text-[10px] font-bold text-rose-400 uppercase tracking-wider">Negative %</p>
+                            <p class="text-xl font-headline font-extrabold text-rose-400 mt-1" id="live-neg-pct">0.0%</p>
+                            <p class="text-[10px] text-on-surface-variant mt-0.5">Live feed</p>
+                        </div>
+                    </div>
+
+                    <!-- Live Feed Confidence Breakdown Chart -->
+                    <div class="lg:col-span-5 glass-inner p-5 rounded-2xl flex flex-col justify-between relative">
+                        <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2">Confidence Level Distribution</p>
+                        <div class="relative w-full h-28">
+                            <canvas id="live-confidence-chart" aria-label="Live Items Confidence Distribution Chart" role="img"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Stream Table -->
+                <div class="overflow-x-auto rounded-2xl border border-card-border">
+                    <table class="w-full text-left text-xs" aria-label="Live Stream Ingestion Table">
+                        <thead>
+                            <tr class="glass-inner text-on-surface-variant font-bold border-b border-card-border">
+                                <th scope="col" class="p-3.5">Source</th>
+                                <th scope="col" class="p-3.5">Live Content Snippet</th>
+                                <th scope="col" class="p-3.5">Sentiment</th>
+                                <th scope="col" class="p-3.5">Confidence</th>
+                                <th scope="col" class="p-3.5">Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="live-feed-table-body" class="divide-y divide-card-border">
+                            <tr>
+                                <td colspan="5" class="p-5 text-center text-on-surface-variant italic">Loading live ingestion stream...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 2. SINGLE ANALYSIS VIEW -->
+        <section id="view-single" role="tabpanel" aria-labelledby="nav-single" class="hidden space-y-8 animate-fade-in-up">
+            <div>
+                <h2 class="text-2xl md:text-3xl font-headline font-extrabold text-on-background tracking-tight">Single Text Analysis</h2>
+                <p class="text-on-surface-variant text-sm mt-1">Submit any text snippet for immediate real-time NLP classification and probability distribution.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Text Input Panel -->
+                <div class="lg:col-span-5 flex flex-col">
+                    <div class="glass-card p-6 md:p-8 rounded-3xl flex-1 flex flex-col space-y-4">
+                        <label class="font-headline font-bold text-on-background flex items-center gap-2" for="single-input">
+                            <span class="material-symbols-outlined text-indigo-400">edit_note</span>
+                            Text Input
+                        </label>
+                        <textarea id="single-input" rows="8" class="w-full flex-1 glass-inner rounded-2xl p-4 text-on-background text-sm focus:outline-none resize-none font-body leading-relaxed border border-card-border focus:border-indigo-500/50 transition-all" placeholder="Type or paste text to analyze (e.g., customer review, tweet, feedback email)..." oninput="updateCharCount()"></textarea>
+                        
+                        <div class="flex justify-between items-center pt-2 flex-wrap gap-2">
+                            <span class="text-xs text-on-surface-variant font-medium" id="single-char-count">0 characters</span>
+                            <button onclick="runSinglePredict()" id="single-analyze-btn" class="min-h-[44px] bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary">
+                                <span class="material-symbols-outlined text-lg">auto_awesome</span>
+                                Analyze Sentiment
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Results Panel -->
+                <div class="lg:col-span-7 space-y-6">
+                    <!-- Result Header Card -->
+                    <div class="glass-card p-6 md:p-8 rounded-3xl relative overflow-hidden">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-headline font-bold text-lg text-on-background">Analysis Outcome</h3>
+                            <div id="single-sentiment-badge" class="glass-inner px-4 py-1.5 rounded-full flex items-center gap-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span class="text-xs font-extrabold tracking-wider uppercase" id="single-sentiment-label">READY</span>
+                            </div>
+                        </div>
+
+                        <!-- Cleaned Text Section -->
+                        <div class="glass-inner p-4 rounded-2xl mb-6">
+                            <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Preprocessed NLP Tokens</p>
+                            <p id="single-cleaned-text" class="text-sm font-body italic text-on-background">"Submit text above to begin processing."</p>
+                        </div>
+
+                        <!-- Confidence Score Bar -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-sm font-medium">
+                                <span class="text-on-background">Confidence Score</span>
+                                <span class="text-indigo-400 font-extrabold" id="single-confidence">0.0%</span>
+                            </div>
+                            <div class="h-3.5 w-full glass-inner rounded-full overflow-hidden p-0.5">
+                                <div id="single-confidence-bar" class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-700 ease-out" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Probability Breakdown & Metrics -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <!-- Probability Bars -->
+                        <div class="glass-card p-6 rounded-3xl space-y-4">
+                            <h4 class="font-headline font-bold text-on-background text-sm flex items-center gap-2">
+                                <span class="material-symbols-outlined text-purple-400">bar_chart</span>
+                                Class Probabilities
+                            </h4>
+
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="flex justify-between text-xs font-medium mb-1">
+                                        <span class="text-emerald-400 font-bold">Positive</span>
+                                        <span id="prob-val-pos" class="text-on-background font-mono">0%</span>
+                                    </div>
+                                    <div class="h-2.5 w-full glass-inner rounded-full overflow-hidden p-0.5">
+                                        <div id="prob-bar-pos" class="h-full bg-emerald-400 rounded-full transition-all duration-500" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs font-medium mb-1">
+                                        <span class="text-amber-400 font-bold">Neutral</span>
+                                        <span id="prob-val-neu" class="text-on-background font-mono">0%</span>
+                                    </div>
+                                    <div class="h-2.5 w-full glass-inner rounded-full overflow-hidden p-0.5">
+                                        <div id="prob-bar-neu" class="h-full bg-amber-400 rounded-full transition-all duration-500" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs font-medium mb-1">
+                                        <span class="text-rose-400 font-bold">Negative</span>
+                                        <span id="prob-val-neg" class="text-on-background font-mono">0%</span>
+                                    </div>
+                                    <div class="h-2.5 w-full glass-inner rounded-full overflow-hidden p-0.5">
+                                        <div id="prob-bar-neg" class="h-full bg-rose-400 rounded-full transition-all duration-500" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Execution Metadata -->
+                        <div class="glass-card p-6 rounded-3xl flex flex-col justify-between space-y-4">
+                            <h4 class="font-headline font-bold text-on-background text-sm flex items-center gap-2">
+                                <span class="material-symbols-outlined text-indigo-400">memory</span>
+                                Inference Metadata
+                            </h4>
+
+                            <div class="space-y-3 text-xs">
+                                <div class="flex justify-between p-2.5 rounded-xl glass-inner">
+                                    <span class="text-on-surface-variant font-medium">Processing Time</span>
+                                    <span id="single-latency" class="font-mono font-bold text-indigo-400">0 ms</span>
+                                </div>
+                                <div class="flex justify-between p-2.5 rounded-xl glass-inner">
+                                    <span class="text-on-surface-variant font-medium">Pipeline Model</span>
+                                    <span id="single-model-meta" class="font-bold text-on-background">DistilBERT</span>
+                                </div>
+                                <div class="flex justify-between p-2.5 rounded-xl glass-inner">
+                                    <span class="text-on-surface-variant font-medium">Tokenizer</span>
+                                    <span id="single-tokenizer-meta" class="font-bold text-on-background">WordPiece</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 3. BATCH UPLOAD VIEW -->
+        <section id="view-batch" role="tabpanel" aria-labelledby="nav-batch" class="hidden space-y-8 animate-fade-in-up">
+            <div>
+                <h2 class="text-2xl md:text-3xl font-headline font-extrabold text-on-background tracking-tight">Batch CSV Analysis</h2>
+                <p class="text-on-surface-variant text-sm mt-1">Upload a CSV dataset containing a 'text' column for batch classification and summary distribution.</p>
+            </div>
+
+            <!-- Upload Zone Card -->
+            <div class="glass-card p-6 md:p-8 rounded-3xl space-y-6">
+                <div class="flex justify-between items-center flex-wrap gap-3">
+                    <h3 class="text-lg font-headline font-bold text-on-background flex items-center gap-2">
+                        <span class="material-symbols-outlined text-indigo-400">upload_file</span>
+                        Upload Dataset
+                    </h3>
+                    <button onclick="downloadSampleCSV()" class="glass-card min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold text-indigo-400 flex items-center gap-2 glass-card-interactive focus-visible:ring-2 focus-visible:ring-primary">
+                        <span class="material-symbols-outlined text-base">download</span>
+                        Download Sample CSV
+                    </button>
+                </div>
+
+                <!-- Drop Area -->
+                <div id="drop-zone" onclick="document.getElementById('file-input').click()" role="button" tabindex="0" aria-label="Drag and drop CSV file or click to browse" onkeypress="if(event.key==='Enter'||event.key===' ') document.getElementById('file-input').click()" class="glass-inner rounded-3xl border-2 border-dashed border-card-border p-8 md:p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:border-indigo-500/60 group focus-visible:ring-2 focus-visible:ring-primary">
+                    <div class="w-16 h-16 rounded-3xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-3xl">cloud_upload</span>
+                    </div>
+                    <h4 class="font-headline font-extrabold text-on-background text-base md:text-lg mb-1">Drag & Drop CSV File Here</h4>
+                    <p class="text-on-surface-variant text-xs md:text-sm max-w-md mb-4">File must be a valid <code>.csv</code> with a <code>text</code> header column.</p>
+                    <span class="px-5 py-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold text-xs flex items-center gap-2 shadow-sm">
+                        <span class="material-symbols-outlined text-sm">folder_open</span>
+                        Browse Computer
+                    </span>
+                    <input type="file" id="file-input" accept=".csv" class="hidden" onchange="handleFileSelect(event)"/>
+                </div>
+
+                <!-- Progress Indicator -->
+                <div id="batch-progress-container" class="hidden space-y-2">
+                    <div class="flex justify-between text-xs font-semibold">
+                        <span class="text-indigo-400" id="batch-progress-status">Uploading & Processing...</span>
+                        <span id="batch-file-name" class="text-on-surface-variant font-mono">dataset.csv</span>
+                    </div>
+                    <div class="h-3 w-full glass-inner rounded-full overflow-hidden p-0.5">
+                        <div id="batch-progress-bar" class="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all duration-300" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Batch Summary Stats Cards -->
+            <div id="batch-summary-cards" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="glass-card p-6 rounded-3xl">
+                    <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Total Rows</p>
+                    <p class="text-2xl font-headline font-extrabold text-on-background mt-1" id="batch-total-rows">0</p>
+                </div>
+                <div class="glass-card p-6 rounded-3xl">
+                    <p class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Positive Ratio</p>
+                    <p class="text-2xl font-headline font-extrabold text-emerald-400 mt-1" id="batch-pos-pct">0.0%</p>
+                </div>
+                <div class="glass-card p-6 rounded-3xl">
+                    <p class="text-xs font-bold text-amber-400 uppercase tracking-wider">Neutral Ratio</p>
+                    <p class="text-2xl font-headline font-extrabold text-amber-400 mt-1" id="batch-neu-pct">0.0%</p>
+                </div>
+                <div class="glass-card p-6 rounded-3xl">
+                    <p class="text-xs font-bold text-rose-400 uppercase tracking-wider">Negative Ratio</p>
+                    <p class="text-2xl font-headline font-extrabold text-rose-400 mt-1" id="batch-neg-pct">0.0%</p>
+                </div>
+            </div>
+
+            <!-- Batch Predictions Table -->
+            <div id="batch-results-table-container" class="hidden glass-card p-6 rounded-3xl space-y-4">
+                <h3 class="font-headline font-bold text-base text-on-background">Row Predictions Breakdown</h3>
+                <div class="overflow-x-auto rounded-2xl border border-card-border">
+                    <table class="w-full text-left text-xs" aria-label="Batch Predictions Breakdown Table">
+                        <thead>
+                            <tr class="glass-inner text-on-surface-variant font-bold border-b border-card-border">
+                                <th scope="col" class="p-3.5">#</th>
+                                <th scope="col" class="p-3.5">Input Text</th>
+                                <th scope="col" class="p-3.5">Predicted Sentiment</th>
+                                <th scope="col" class="p-3.5">Confidence</th>
+                                <th scope="col" class="p-3.5">Latency</th>
+                            </tr>
+                        </thead>
+                        <tbody id="batch-table-body" class="divide-y divide-card-border">
+                            <!-- Rows inserted dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 4. MODEL PERFORMANCE MATRIX VIEW -->
+        <section id="view-performance" role="tabpanel" aria-labelledby="nav-performance" class="hidden space-y-8 animate-fade-in-up">
+            <div>
+                <h2 class="text-2xl md:text-3xl font-headline font-extrabold text-on-background tracking-tight">Model Performance & Calibration Matrix</h2>
+                <p class="text-on-surface-variant text-sm mt-1">Detailed evaluation metrics, hyperparameter grid search results, and calibration analysis on CardiffNLP TweetEval dataset.</p>
+            </div>
+
+            <!-- Informative Callout Banner for Offline Benchmark vs Uploaded Dataset -->
+            <div class="glass-card p-4 rounded-2xl border border-indigo-500/30 flex items-center gap-3 bg-indigo-500/5">
+                <span class="material-symbols-outlined text-indigo-400 text-xl shrink-0">verified_user</span>
+                <p class="text-xs text-on-surface-variant leading-relaxed">
+                    <strong class="text-on-background">Offline AI Model Validation Matrix:</strong> The metrics on this tab evaluate the underlying NLP classification engines (MNB, Logistic Regression, Bi-LSTM, DistilBERT) on held-out test splits (~60k CardiffNLP benchmark dataset) to measure baseline model accuracy. Live user predictions and uploaded batch datasets are visualized on the <strong class="text-indigo-400">Dashboard</strong> and <strong class="text-indigo-400">Batch Upload</strong> screens.
+                </p>
+            </div>
+
+            <!-- Top KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="glass-card glass-card-interactive p-6 rounded-3xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                        <span class="material-symbols-outlined text-2xl">verified</span>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Test Accuracy</p>
+                        <p class="text-2xl font-headline font-extrabold text-on-background" id="perf-accuracy">61.6%</p>
+                    </div>
+                </div>
+
+                <div class="glass-card glass-card-interactive p-6 rounded-3xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                        <span class="material-symbols-outlined text-2xl">insights</span>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Macro F1 Score</p>
+                        <p class="text-2xl font-headline font-extrabold text-emerald-400" id="perf-macro-f1">0.585</p>
+                    </div>
+                </div>
+
+                <div class="glass-card glass-card-interactive p-6 rounded-3xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
+                        <span class="material-symbols-outlined text-2xl">tune</span>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Best Model</p>
+                        <p class="text-sm font-extrabold text-on-background mt-0.5 truncate" id="perf-best-model">Logistic Regression</p>
+                    </div>
+                </div>
+
+                <div class="glass-card glass-card-interactive p-6 rounded-3xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                        <span class="material-symbols-outlined text-2xl">balance</span>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Brier Score</p>
+                        <p class="text-2xl font-headline font-extrabold text-on-background" id="perf-brier">0.4960</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Matrix Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Model Performance Matrix Progress Bars Card -->
+                <div class="lg:col-span-6 glass-card p-6 md:p-8 rounded-3xl flex flex-col justify-between space-y-6">
+                    <div>
+                        <h3 class="font-headline font-bold text-lg text-on-background flex items-center gap-2 mb-2">
+                            <span class="material-symbols-outlined text-indigo-400">speed</span>
+                            Model Evaluation Metrics
+                        </h3>
+                        <p class="text-xs text-on-surface-variant mb-6">Trained & validated on CardiffNLP TweetEval 3-class dataset (15,000 tweets) with class weighting & probability calibration.</p>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-xs font-medium mb-1.5">
+                                    <span class="text-on-background">Precision (Macro)</span>
+                                    <span class="font-mono font-bold text-indigo-400" id="perf-prec">61.3%</span>
+                                </div>
+                                <div class="h-3 w-full glass-inner rounded-full overflow-hidden p-0.5">
+                                    <div id="perf-bar-prec" class="h-full bg-indigo-500 rounded-full transition-all duration-700 ease-out" style="width: 61.3%;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-medium mb-1.5">
+                                    <span class="text-on-background">Recall (Macro)</span>
+                                    <span class="font-mono font-bold text-purple-400" id="perf-rec">57.3%</span>
+                                </div>
+                                <div class="h-3 w-full glass-inner rounded-full overflow-hidden p-0.5">
+                                    <div id="perf-bar-rec" class="h-full bg-purple-500 rounded-full transition-all duration-700 ease-out" style="width: 57.3%;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-medium mb-1.5">
+                                    <span class="text-on-background">Macro F1-Score</span>
+                                    <span class="font-mono font-bold text-emerald-400" id="perf-f1">58.5%</span>
+                                </div>
+                                <div class="h-3 w-full glass-inner rounded-full overflow-hidden p-0.5">
+                                    <div id="perf-bar-f1" class="h-full bg-emerald-400 rounded-full transition-all duration-700 ease-out" style="width: 58.5%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calibration & Grid Search Metadata -->
+                    <div class="glass-inner p-4 rounded-2xl space-y-2 text-xs">
+                        <div class="flex justify-between flex-wrap gap-1">
+                            <span class="text-on-surface-variant font-semibold">Winning TF-IDF Params:</span>
+                            <span class="font-mono text-indigo-400 font-bold" id="perf-tfidf-params">max_features=5000, ngrams=(1,1)</span>
+                        </div>
+                        <div class="flex justify-between flex-wrap gap-1">
+                            <span class="text-on-surface-variant font-semibold">Winning LR Hyperparameter:</span>
+                            <span class="font-mono text-purple-400 font-bold" id="perf-lr-params">C = 1.0 (lbfgs solver)</span>
+                        </div>
+                        <div class="flex justify-between flex-wrap gap-1">
+                            <span class="text-on-surface-variant font-semibold">Probability Calibration:</span>
+                            <span class="font-mono text-emerald-400 font-bold" id="perf-calib-type">Sigmoid Platt (Brier: 0.5076 vs 0.5243)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Multi-Model Benchmark Comparison Chart Card -->
+                <div class="lg:col-span-6 glass-card p-6 md:p-8 rounded-3xl flex flex-col justify-between space-y-6 relative">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-headline font-bold text-lg text-on-background flex items-center gap-2">
+                            <span class="material-symbols-outlined text-purple-400">leaderboard</span>
+                            Multi-Model Benchmark Comparison
+                        </h3>
+                        <span class="text-[10px] glass-inner px-3 py-1 rounded-full text-purple-400 font-bold uppercase tracking-wider border border-purple-500/20">Dynamic Data</span>
+                    </div>
+
+                    <!-- Chart Canvas & Overlay Containers -->
+                    <div class="relative w-full h-64 flex items-center justify-center">
+                        <div id="perf-benchmark-skeleton" class="absolute inset-0 flex flex-col items-center justify-center glass-inner rounded-2xl skeleton-shimmer space-y-2 z-10 hidden">
+                            <span class="material-symbols-outlined text-3xl text-purple-400 animate-spin-fast">sync</span>
+                            <span class="text-xs text-on-surface-variant font-medium">Fetching benchmark metrics...</span>
+                        </div>
+                        <div id="perf-benchmark-error" class="absolute inset-0 flex flex-col items-center justify-center glass-inner rounded-2xl space-y-2 z-10 p-4 text-center hidden">
+                            <span class="material-symbols-outlined text-rose-500 text-2xl">error_outline</span>
+                            <p class="text-xs text-on-background font-semibold">Failed to fetch model comparison data</p>
+                            <button onclick="loadMetrics()" class="text-xs text-purple-400 font-bold glass-card px-3 py-1.5 rounded-lg border border-purple-500/30">Retry Fetch</button>
+                        </div>
+                        <canvas id="perf-benchmark-chart" aria-label="Multi-Model Benchmark Comparison Bar Chart" role="img"></canvas>
+                    </div>
+
+                    <!-- Accessible Screen Reader Table -->
+                    <div class="sr-only">
+                        <h4>Multi-Model Benchmark Results Table</h4>
+                        <table id="sr-benchmark-table">
+                            <thead><tr><th>Model</th><th>CV Macro F1</th><th>Test Accuracy</th></tr></thead>
+                            <tbody id="sr-benchmark-tbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p class="text-[11px] text-on-surface-variant text-center italic">5-Fold Stratified Cross-Validation vs. Held-Out Test Set Metrics</p>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 5. MODEL REPORTS VIEW -->
+        <section id="view-reports" role="tabpanel" aria-labelledby="nav-reports" class="hidden space-y-8 animate-fade-in-up">
+            <div>
+                <h2 class="text-2xl md:text-3xl font-headline font-extrabold text-on-background tracking-tight">Model Performance Reports</h2>
+                <p class="text-on-surface-variant text-sm mt-1">Complete evaluation metrics, confusion matrix, and multi-model benchmark results.</p>
+            </div>
+
+            <!-- Informative Callout Banner for Offline Benchmark vs Uploaded Dataset -->
+            <div class="glass-card p-4 rounded-2xl border border-indigo-500/30 flex items-center gap-3 bg-indigo-500/5">
+                <span class="material-symbols-outlined text-indigo-400 text-xl shrink-0">analytics</span>
+                <p class="text-xs text-on-surface-variant leading-relaxed">
+                    <strong class="text-on-background">Offline AI Model Validation Matrix:</strong> The confusion matrix and class metrics displayed here reflect the held-out validation test split of the AI model. Batch CSV uploads are processed live and summarized on the <strong class="text-indigo-400">Dashboard</strong> and <strong class="text-indigo-400">Batch Upload</strong> tabs.
+                </p>
+            </div>
+
+            <!-- Active Model Banner -->
+            <div class="glass-card p-6 md:p-8 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">Loaded Deployment Model</span>
+                    <h3 class="text-xl font-headline font-extrabold text-on-background mt-1" id="report-best-model-name">Logistic Regression</h3>
+                    <p class="text-xs text-on-surface-variant mt-1" id="report-artifact-meta">Artifact: <code>best_model_meta.json</code></p>
+                </div>
+                <div class="flex gap-3">
+                    <div class="text-center p-3 glass-inner rounded-2xl min-w-[80px]">
+                        <p class="text-[10px] uppercase font-bold text-on-surface-variant">Macro F1</p>
+                        <p class="text-lg font-extrabold text-emerald-400 mt-0.5" id="report-f1">0.585</p>
+                    </div>
+                    <div class="text-center p-3 glass-inner rounded-2xl min-w-[80px]">
+                        <p class="text-[10px] uppercase font-bold text-on-surface-variant">Accuracy</p>
+                        <p class="text-lg font-extrabold text-indigo-400 mt-0.5" id="report-acc">0.616</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confusion Matrix & Class Metrics Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Confusion Matrix Visualizer -->
+                <div class="lg:col-span-6 glass-card p-6 md:p-8 rounded-3xl space-y-6">
+                    <h3 class="font-headline font-bold text-base text-on-background flex items-center gap-2">
+                        <span class="material-symbols-outlined text-indigo-400">grid_on</span>
+                        Confusion Matrix (3-Class Test Split)
+                    </h3>
+                    <div class="grid grid-cols-4 gap-2 text-center text-xs font-bold" aria-label="Confusion Matrix Grid">
+                        <div></div>
+                        <div class="p-2 text-rose-400">Pred Neg</div>
+                        <div class="p-2 text-amber-400">Pred Neu</div>
+                        <div class="p-2 text-emerald-400">Pred Pos</div>
+
+                        <div class="p-2 flex items-center justify-end text-rose-400">True Neg</div>
+                        <div class="p-4 glass-inner rounded-2xl bg-rose-500/10 text-rose-400 font-extrabold text-sm border border-rose-500/30" id="cm-00">170</div>
+                        <div class="p-4 glass-inner rounded-2xl text-on-surface-variant" id="cm-01">205</div>
+                        <div class="p-4 glass-inner rounded-2xl text-on-surface-variant" id="cm-02">53</div>
+
+                        <div class="p-2 flex items-center justify-end text-amber-400">True Neu</div>
+                        <div class="p-4 glass-inner rounded-2xl text-on-surface-variant" id="cm-10">110</div>
+                        <div class="p-4 glass-inner rounded-2xl bg-amber-500/10 text-amber-400 font-extrabold text-sm border border-amber-500/30" id="cm-11">741</div>
+                        <div class="p-4 glass-inner rounded-2xl text-on-surface-variant" id="cm-12">180</div>
+
+                        <div class="p-2 flex items-center justify-end text-emerald-400">True Pos</div>
+                        <div class="p-4 glass-inner rounded-2xl text-on-surface-variant" id="cm-20">17</div>
+                        <div class="p-4 glass-inner rounded-2xl text-on-surface-variant" id="cm-21">298</div>
+                        <div class="p-4 glass-inner rounded-2xl bg-emerald-500/10 text-emerald-400 font-extrabold text-sm border border-emerald-500/30" id="cm-22">476</div>
+                    </div>
+                </div>
+
+                <!-- Per-Class Metrics Table -->
+                <div class="lg:col-span-6 glass-card p-6 md:p-8 rounded-3xl space-y-6">
+                    <h3 class="font-headline font-bold text-base text-on-background flex items-center gap-2">
+                        <span class="material-symbols-outlined text-purple-400">fact_check</span>
+                        Per-Class Performance Metrics
+                    </h3>
+
+                    <div class="space-y-4">
+                        <div class="p-4 glass-inner rounded-2xl flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 rounded-full bg-rose-500 shadow-sm shadow-rose-500/50"></span>
+                                <span class="font-bold text-sm">Negative Class</span>
+                            </div>
+                            <div class="flex gap-4 text-xs font-mono font-bold">
+                                <span>Prec: <span id="class-neg-p" class="text-indigo-400">0.57</span></span>
+                                <span>Rec: <span id="class-neg-r" class="text-purple-400">0.40</span></span>
+                                <span>F1: <span id="class-neg-f1" class="text-emerald-400">0.47</span></span>
+                            </div>
+                        </div>
+
+                        <div class="p-4 glass-inner rounded-2xl flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 rounded-full bg-amber-500 shadow-sm shadow-amber-500/50"></span>
+                                <span class="font-bold text-sm">Neutral Class</span>
+                            </div>
+                            <div class="flex gap-4 text-xs font-mono font-bold">
+                                <span>Prec: <span id="class-neu-p" class="text-indigo-400">0.60</span></span>
+                                <span>Rec: <span id="class-neu-r" class="text-purple-400">0.72</span></span>
+                                <span>F1: <span id="class-neu-f1" class="text-emerald-400">0.65</span></span>
+                            </div>
+                        </div>
+
+                        <div class="p-4 glass-inner rounded-2xl flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
+                                <span class="font-bold text-sm">Positive Class</span>
+                            </div>
+                            <div class="flex gap-4 text-xs font-mono font-bold">
+                                <span>Prec: <span id="class-pos-p" class="text-indigo-400">0.67</span></span>
+                                <span>Rec: <span id="class-pos-r" class="text-purple-400">0.60</span></span>
+                                <span>F1: <span id="class-pos-f1" class="text-emerald-400">0.63</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Interactive Chart Pop-up Lightbox Modal -->
+    <div id="chart-modal" role="dialog" aria-modal="true" aria-labelledby="modal-chart-title" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl opacity-0 pointer-events-none transition-all duration-300">
+        <div id="chart-modal-content" class="glass-card max-w-4xl w-full p-6 md:p-8 rounded-3xl space-y-6 relative transform scale-95 transition-all duration-300 border border-indigo-500/30 shadow-2xl">
+            <div class="flex justify-between items-center pb-4 border-b border-card-border">
+                <div>
+                    <h3 class="font-headline font-extrabold text-xl text-on-background flex items-center gap-2" id="modal-chart-title">
+                        <span class="material-symbols-outlined text-indigo-400">analytics</span>
+                        Detailed Visual Telemetry
+                    </h3>
+                    <p class="text-xs text-on-surface-variant mt-1" id="modal-chart-subtitle">Expanded dataset metric analysis and distribution stats.</p>
+                </div>
+                <button onclick="closeChartModal()" class="w-10 h-10 rounded-2xl glass-inner flex items-center justify-center text-on-surface-variant hover:text-rose-400 transition-colors focus-visible:ring-2 focus-visible:ring-primary" aria-label="Close modal">
+                    <span class="material-symbols-outlined text-xl">close</span>
+                </button>
+            </div>
+            
+            <div class="relative w-full h-80 md:h-[400px]">
+                <canvas id="modal-chart-canvas" role="img" aria-label="Expanded High-Resolution Chart View"></canvas>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center pt-4 border-t border-card-border text-xs" id="modal-stats-grid">
+                <!-- Dynamically populated in JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast" role="status" aria-live="polite" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-400 glass-card px-5 py-3.5 rounded-2xl flex items-center gap-3 shadow-2xl border border-indigo-500/30">
+        <span class="material-symbols-outlined text-indigo-400" id="toast-icon">info</span>
+        <span class="text-xs font-bold text-on-background" id="toast-msg">Notification message</span>
+    </div>
+
+    <!-- Application Client JavaScript -->
+    <script>
+        // Global Chart Instances
+        let dashboardDoughnutChart = null;
+        let liveConfidenceBarChart = null;
+        let perfBenchmarkChart = null;
+        let liveTimelineLineChart = null;
+
+        // Timeline dataset buffer
+        const timelineData = {
+            timestamps: [],
+            posPct: [],
+            neuPct: [],
+            negPct: []
+        };
+
+        // Safe DOM Element Property Setters (Prevents uncaught null errors from breaking JS execution)
+        function safeSetText(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.innerText = text;
+        }
+        function safeSetWidth(id, widthVal) {
+            const el = document.getElementById(id);
+            if (el) el.style.width = widthVal;
+        }
+
+        // Theme State Management
+        function isDarkMode() {
+            return document.documentElement.classList.contains('dark');
+        }
+        function getChartTextColor() {
+            return isDarkMode() ? '#f8fafc' : '#0f172a';
+        }
+        function getChartMutedColor() {
+            return isDarkMode() ? '#94a3b8' : '#64748b';
+        }
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                document.documentElement.classList.remove('light');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.classList.add('light');
+                localStorage.setItem('theme', 'light');
+            }
+            updateThemeIcons(isDark);
+            updateChartThemes();
+            if (window.updateDotFieldTheme) {
+                window.updateDotFieldTheme(isDark);
+            }
+        }
+
+        function toggleDarkMode() {
+            applyTheme(!isDarkMode());
+        }
+
+        function updateThemeIcons(isDark) {
+            const iconDesktop = document.getElementById('theme-icon-desktop');
+            const textDesktop = document.getElementById('theme-text-desktop');
+            const iconMobile = document.getElementById('theme-icon-mobile');
+
+            if (isDark) {
+                if (iconDesktop) iconDesktop.innerText = 'light_mode';
+                if (textDesktop) textDesktop.innerText = 'Light Theme';
+                if (iconMobile) iconMobile.innerText = 'light_mode';
+            } else {
+                if (iconDesktop) iconDesktop.innerText = 'dark_mode';
+                if (textDesktop) textDesktop.innerText = 'Dark Theme';
+                if (iconMobile) iconMobile.innerText = 'dark_mode';
+            }
+        }
+
+        (function initTheme() {
+            const saved = localStorage.getItem('theme');
+            if (saved === 'light') {
+                applyTheme(false);
+            } else {
+                applyTheme(true); // Default to sleek ultra-dark theme
+            }
+        })();
+
+        // -------------------------------------------------------------
+        // DotField Interactive Background Engine (React Bits & Dynamic Mode System)
+        // -------------------------------------------------------------
+        (function initDotFieldEngine() {
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (prefersReducedMotion) return;
+
+            const canvas = document.getElementById('shader-canvas');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d', { alpha: true });
+            if (!ctx) return;
+
+            const TWO_PI = Math.PI * 2;
+            let dots = [];
+            let animationFrameId = null;
+            let lastFrameTime = 0;
+
+            const mouse = { x: -9999, y: -9999, prevX: -9999, prevY: -9999, speed: 0 };
+            const size = { w: 0, h: 0 };
+            let engagement = 0;
+            let glowOpacity = 0;
+            let frameCount = 0;
+
+            // Palette Definitions for Theme Modes (RGB arrays for smooth lerp)
+            const TAB_THEMES = {
+                dark: {
+                    dashboard:   { from: [168, 85, 247],  to: [99, 102, 241],   glow: [168, 85, 247] }, // Purple/Indigo
+                    single:      { from: [6, 182, 212],   to: [99, 102, 241],   glow: [6, 182, 212] },   // Cyan/Indigo
+                    batch:       { from: [236, 72, 153],  to: [168, 85, 247],   glow: [236, 72, 153] },  // Pink/Magenta
+                    performance: { from: [16, 185, 129],  to: [6, 182, 212],    glow: [16, 185, 129] },  // Emerald/Teal
+                    reports:     { from: [245, 158, 11],  to: [168, 85, 247],   glow: [245, 158, 11] }   // Amber/Violet
+                },
+                light: {
+                    dashboard:   { from: [99, 102, 241],  to: [124, 58, 237],   glow: [99, 102, 241] },
+                    single:      { from: [14, 165, 233],  to: [99, 102, 241],   glow: [14, 165, 233] },
+                    batch:       { from: [219, 39, 119],  to: [124, 58, 237],   glow: [219, 39, 119] },
+                    performance: { from: [16, 185, 129],  to: [14, 165, 233],   glow: [16, 185, 129] },
+                    reports:     { from: [217, 119, 6],   to: [124, 58, 237],   glow: [217, 119, 6] }
+                }
+            };
+
+            const PULSE_THEMES = {
+                positive: { from: [16, 185, 129],  to: [52, 211, 153],  glow: [16, 185, 129] },
+                negative: { from: [239, 68, 68],   to: [248, 113, 113], glow: [239, 68, 68] },
+                neutral:  { from: [245, 158, 11],  to: [251, 191, 36],  glow: [245, 158, 11] }
+            };
+
+            let activeTab = 'dashboard';
+            let activeThemeMode = isDarkMode() ? 'dark' : 'light';
+            let pulseMode = null;
+            let pulseTimer = null;
+
+            // Current interpolated RGB values
+            const currFrom = [...TAB_THEMES[activeThemeMode][activeTab].from];
+            const currTo   = [...TAB_THEMES[activeThemeMode][activeTab].to];
+            const currGlow = [...TAB_THEMES[activeThemeMode][activeTab].glow];
+
+            function getTargetPalette() {
+                if (pulseMode && PULSE_THEMES[pulseMode]) {
+                    return PULSE_THEMES[pulseMode];
+                }
+                const themeObj = TAB_THEMES[activeThemeMode] || TAB_THEMES.dark;
+                return themeObj[activeTab] || themeObj.dashboard;
+            }
+
+            function lerp(start, end, amt) {
+                return start + (end - start) * amt;
+            }
+
+            function updateColors() {
+                const target = getTargetPalette();
+                for (let i = 0; i < 3; i++) {
+                    currFrom[i] = lerp(currFrom[i], target.from[i], 0.05);
+                    currTo[i]   = lerp(currTo[i], target.to[i], 0.05);
+                    currGlow[i] = lerp(currGlow[i], target.glow[i], 0.05);
+                }
+            }
+
+            // Global Hook API for Mode Reactivity
+            window.setDotFieldTabMode = function(tabName) {
+                if (TAB_THEMES.dark[tabName]) {
+                    activeTab = tabName;
+                }
+            };
+
+            window.updateDotFieldTheme = function(isDark) {
+                activeThemeMode = isDark ? 'dark' : 'light';
+            };
+
+            window.triggerDotFieldPulse = function(sentimentStr) {
+                const s = (sentimentStr || '').toLowerCase();
+                if (PULSE_THEMES[s]) {
+                    pulseMode = s;
+                    clearTimeout(pulseTimer);
+                    pulseTimer = setTimeout(() => {
+                        pulseMode = null;
+                    }, 3200);
+                }
+            };
+
+            function resize() {
+                const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+                const w = window.innerWidth;
+                const h = window.innerHeight;
+
+                canvas.width = Math.floor(w * dpr);
+                canvas.height = Math.floor(h * dpr);
+                canvas.style.width = `${w}px`;
+                canvas.style.height = `${h}px`;
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+                size.w = w;
+                size.h = h;
+                buildDots(w, h);
+            }
+
+            function buildDots(w, h) {
+                const dotSpacing = 28;
+                const cols = Math.floor(w / dotSpacing);
+                const rows = Math.floor(h / dotSpacing);
+                const padX = (w % dotSpacing) / 2;
+                const padY = (h % dotSpacing) / 2;
+                dots = new Array(rows * cols);
+                let idx = 0;
+
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cols; col++) {
+                        const ax = padX + col * dotSpacing + dotSpacing / 2;
+                        const ay = padY + row * dotSpacing + dotSpacing / 2;
+                        dots[idx++] = { ax, ay, sx: ax, sy: ay };
+                    }
+                }
+            }
+
+            function onPointerMove(e) {
+                let clientX, clientY;
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                if (clientX !== undefined && clientY !== undefined) {
+                    const dx = clientX - (mouse.prevX > -100 ? mouse.prevX : clientX);
+                    const dy = clientY - (mouse.prevY > -100 ? mouse.prevY : clientY);
+                    const dist = Math.hypot(dx, dy);
+                    mouse.speed += (dist - mouse.speed) * 0.4;
+                    mouse.prevX = mouse.x;
+                    mouse.prevY = mouse.y;
+                    mouse.x = clientX;
+                    mouse.y = clientY;
+                }
+            }
+
+            function onPointerLeave() {
+                mouse.x = -9999;
+                mouse.y = -9999;
+                mouse.prevX = -9999;
+                mouse.prevY = -9999;
+                mouse.speed = 0;
+            }
+
+            window.addEventListener('mousemove', onPointerMove, { passive: true });
+            window.addEventListener('touchmove', onPointerMove, { passive: true });
+            window.addEventListener('mouseleave', onPointerLeave, { passive: true });
+            window.addEventListener('resize', resize, { passive: true });
+
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden && !animationFrameId) {
+                    lastFrameTime = performance.now();
+                    animationFrameId = requestAnimationFrame(tick);
+                }
+            });
+
+            resize();
+
+            function tick(currentTime) {
+                if (document.hidden) {
+                    animationFrameId = null;
+                    return;
+                }
+
+                // Smoothly throttle to ~60fps maximum to eliminate CPU waste on 120/144Hz screens
+                if (currentTime - lastFrameTime < 16) {
+                    animationFrameId = requestAnimationFrame(tick);
+                    return;
+                }
+                lastFrameTime = currentTime;
+
+                frameCount++;
+                const { w, h } = size;
+                const len = dots.length;
+                const t = frameCount * 0.02;
+
+                updateColors();
+
+                const isDark = activeThemeMode === 'dark';
+                const fromAlpha = isDark ? 0.85 : 0.65;
+                const toAlpha   = isDark ? 0.60 : 0.45;
+                const glowAlpha = isDark ? 0.55 : 0.35;
+
+                const rFrom = Math.round(currFrom[0]), gFrom = Math.round(currFrom[1]), bFrom = Math.round(currFrom[2]);
+                const rTo   = Math.round(currTo[0]),   gTo   = Math.round(currTo[1]),   bTo   = Math.round(currTo[2]);
+                const rGlow = Math.round(currGlow[0]), gGlow = Math.round(currGlow[1]), bGlow = Math.round(currGlow[2]);
+
+                // Natural speed decay
+                mouse.speed *= 0.94;
+                if (mouse.speed < 0.005) mouse.speed = 0;
+
+                const targetEngagement = Math.min(mouse.speed / 5, 1);
+                engagement += (targetEngagement - engagement) * 0.06;
+                if (engagement < 0.001) engagement = 0;
+                const eng = engagement;
+
+                glowOpacity += (eng - glowOpacity) * 0.08;
+
+                ctx.clearRect(0, 0, w, h);
+
+                // Ambient Radial Glow Spotlight centered on cursor
+                if (glowOpacity > 0.01 && mouse.x > 0 && mouse.y > 0) {
+                    const glowGrad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 220);
+                    glowGrad.addColorStop(0, `rgba(${rGlow}, ${gGlow}, ${bGlow}, ${glowAlpha})`);
+                    glowGrad.addColorStop(0.5, `rgba(${rGlow}, ${gGlow}, ${bGlow}, ${glowAlpha * 0.4})`);
+                    glowGrad.addColorStop(1, 'transparent');
+                    ctx.fillStyle = glowGrad;
+                    ctx.beginPath();
+                    ctx.arc(mouse.x, mouse.y, 220, 0, TWO_PI);
+                    ctx.fill();
+                }
+
+                // Dot Matrix Grid
+                const grad = ctx.createLinearGradient(0, 0, w, h);
+                grad.addColorStop(0, `rgba(${rFrom}, ${gFrom}, ${bFrom}, ${fromAlpha})`);
+                grad.addColorStop(1, `rgba(${rTo}, ${gTo}, ${bTo}, ${toAlpha})`);
+                ctx.fillStyle = grad;
+
+                const cr = 360;
+                const crSq = cr * cr;
+                const rad = 1.35;
+                const bulgeStrength = 65;
+                const mouseActive = eng > 0.01 && mouse.x > -50 && mouse.x < w + 50 && mouse.y > -50 && mouse.y < h + 50;
+
+                ctx.beginPath();
+
+                for (let i = 0; i < len; i++) {
+                    const d = dots[i];
+                    
+                    if (mouseActive) {
+                        const dx = mouse.x - d.ax;
+                        const dy = mouse.y - d.ay;
+                        const distSq = dx * dx + dy * dy;
+
+                        if (distSq < crSq) {
+                            const dist = Math.sqrt(distSq);
+                            const tNorm = 1 - dist / cr;
+                            const push = tNorm * tNorm * bulgeStrength * eng;
+                            const angle = Math.atan2(dy, dx);
+                            d.sx += (d.ax - Math.cos(angle) * push - d.sx) * 0.15;
+                            d.sy += (d.ay - Math.sin(angle) * push - d.sy) * 0.15;
+                        } else {
+                            d.sx += (d.ax - d.sx) * 0.1;
+                            d.sy += (d.ay - d.sy) * 0.1;
+                        }
+                    } else if (Math.abs(d.sx - d.ax) > 0.01 || Math.abs(d.sy - d.ay) > 0.01) {
+                        d.sx += (d.ax - d.sx) * 0.1;
+                        d.sy += (d.ay - d.sy) * 0.1;
+                    }
+
+                    let drawX = d.sx;
+                    let drawY = d.sy;
+                    drawY += Math.sin(d.ax * 0.03 + t) * 0.35;
+                    drawX += Math.cos(d.ay * 0.03 + t * 0.7) * 0.2;
+
+                    // Sparkle effect
+                    const hash = ((i * 2654435761) ^ (frameCount >> 3)) >>> 0;
+                    if ((hash % 100) < 3) {
+                        ctx.moveTo(drawX + rad * 1.6, drawY);
+                        ctx.arc(drawX, drawY, rad * 1.6, 0, TWO_PI);
+                    } else {
+                        ctx.moveTo(drawX + rad, drawY);
+                        ctx.arc(drawX, drawY, rad, 0, TWO_PI);
+                    }
+                }
+
+                ctx.fill();
+
+                animationFrameId = requestAnimationFrame(tick);
+            }
+
+            animationFrameId = requestAnimationFrame(tick);
+        })();
+
+        // -------------------------------------------------------------
+        // Single Page Navigation & Tab Switching
+        // -------------------------------------------------------------
+        const tabs = ['dashboard', 'single', 'batch', 'performance', 'reports'];
+
+        function switchTab(targetTab) {
+            tabs.forEach(tab => {
+                const viewEl = document.getElementById(`view-${tab}`);
+                const navEl = document.getElementById(`nav-${tab}`);
+                
+                if (tab === targetTab) {
+                    viewEl.classList.remove('hidden');
+                    if (navEl) {
+                        navEl.setAttribute('aria-selected', 'true');
+                        navEl.className = "w-full min-h-[44px] flex items-center gap-3.5 px-4 py-3 rounded-xl text-primary bg-indigo-500/10 font-bold transition-all border border-indigo-500/20 shadow-sm focus-visible:ring-2 focus-visible:ring-primary";
+                    }
+                } else {
+                    viewEl.classList.add('hidden');
+                    if (navEl) {
+                        navEl.setAttribute('aria-selected', 'false');
+                        navEl.className = "w-full min-h-[44px] flex items-center gap-3.5 px-4 py-3 rounded-xl text-on-surface-variant hover:text-primary hover:bg-indigo-500/5 font-medium transition-all focus-visible:ring-2 focus-visible:ring-primary";
+                    }
+                }
+            });
+
+            if (window.setDotFieldTabMode) {
+                window.setDotFieldTabMode(targetTab);
+            }
+
+            if (targetTab === 'reports' || targetTab === 'performance') {
+                loadMetrics();
+            }
+        }
+
+        // Global Modal Pop-Up Lightbox & Latest Proportions State
+        let modalChartInstance = null;
+        let latestSentimentProportions = { pos: 0, neu: 0, neg: 0 };
+
+        function openChartModal(chartType) {
+            if (typeof Chart === 'undefined') {
+                showToast("Chart.js is still loading or unavailable.", "warning");
+                return;
+            }
+            const modal = document.getElementById('chart-modal');
+            const titleEl = document.getElementById('modal-chart-title');
+            const subtitleEl = document.getElementById('modal-chart-subtitle');
+            const statsGrid = document.getElementById('modal-stats-grid');
+            const ctxModal = document.getElementById('modal-chart-canvas');
+
+            if (!modal || !ctxModal) return;
+
+            if (modalChartInstance) {
+                modalChartInstance.destroy();
+                modalChartInstance = null;
+            }
+
+            const textColor = getChartTextColor();
+            const mutedColor = getChartMutedColor();
+
+            if (chartType === 'sentiment') {
+                titleEl.innerHTML = `<span class="material-symbols-outlined text-indigo-400 text-2xl">donut_large</span> Sentiment Class Distribution (Expanded Modal View)`;
+                subtitleEl.innerText = "High-resolution distribution breakdown for the current active dataset.";
+
+                const p = latestSentimentProportions.pos || 0;
+                const n = latestSentimentProportions.neu || 0;
+                const neg = latestSentimentProportions.neg || 0;
+
+                modalChartInstance = new Chart(ctxModal, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Positive', 'Neutral', 'Negative'],
+                        datasets: [{
+                            data: [p, n, neg],
+                            backgroundColor: [
+                                'rgba(16, 185, 129, 0.85)',
+                                'rgba(245, 158, 11, 0.85)',
+                                'rgba(239, 68, 68, 0.85)'
+                            ],
+                            hoverBackgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                            borderColor: isDarkMode() ? 'rgba(23, 20, 46, 0.6)' : 'rgba(255, 255, 255, 0.8)',
+                            borderWidth: 3,
+                            borderRadius: 6,
+                            spacing: 4,
+                            hoverOffset: 18
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '62%',
+                        animation: { animateRotate: true, animateScale: true, duration: 800, easing: 'easeOutQuart' },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom',
+                                labels: {
+                                    font: { family: 'Plus Jakarta Sans', size: 13, weight: '700' },
+                                    color: textColor,
+                                    usePointStyle: true,
+                                    pointStyleWidth: 14,
+                                    padding: 20
+                                }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: isDarkMode() ? 'rgba(23, 20, 46, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                                titleColor: textColor,
+                                bodyColor: textColor,
+                                padding: 14,
+                                callbacks: {
+                                    label: (ctx) => ` ${ctx.label}: ${ctx.raw}%`
+                                }
+                            }
+                        }
+                    }
+                });
+
+                statsGrid.innerHTML = `
+                    <div class="glass-inner p-4 rounded-2xl">
+                        <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block">Positive Sentiment</span>
+                        <span class="text-xl font-extrabold text-emerald-400 mt-1 block">${p}%</span>
+                        <span class="text-[10px] text-on-surface-variant">Active Class Share</span>
+                    </div>
+                    <div class="glass-inner p-4 rounded-2xl">
+                        <span class="text-[10px] text-amber-400 font-bold uppercase tracking-wider block">Neutral Sentiment</span>
+                        <span class="text-xl font-extrabold text-amber-400 mt-1 block">${n}%</span>
+                        <span class="text-[10px] text-on-surface-variant">Active Class Share</span>
+                    </div>
+                    <div class="glass-inner p-4 rounded-2xl">
+                        <span class="text-[10px] text-rose-400 font-bold uppercase tracking-wider block">Negative Sentiment</span>
+                        <span class="text-xl font-extrabold text-rose-400 mt-1 block">${neg}%</span>
+                        <span class="text-[10px] text-on-surface-variant">Active Class Share</span>
+                    </div>
+                `;
+            } else if (chartType === 'timeline') {
+                titleEl.innerHTML = `<span class="material-symbols-outlined text-purple-400 text-2xl">show_chart</span> Live Sentiment Trajectory (Expanded Modal View)`;
+                subtitleEl.innerText = "Real-time rolling sentiment trajectory across continuous post ingestions.";
+
+                const posGrad = ctxModal.getContext('2d').createLinearGradient(0, 0, 0, 300);
+                posGrad.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+                posGrad.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+                const neuGrad = ctxModal.getContext('2d').createLinearGradient(0, 0, 0, 300);
+                neuGrad.addColorStop(0, 'rgba(245, 158, 11, 0.4)');
+                neuGrad.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
+
+                const negGrad = ctxModal.getContext('2d').createLinearGradient(0, 0, 0, 300);
+                negGrad.addColorStop(0, 'rgba(239, 68, 68, 0.4)');
+                negGrad.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
+
+                modalChartInstance = new Chart(ctxModal, {
+                    type: 'line',
+                    data: {
+                        labels: timelineData.timestamps.length ? timelineData.timestamps : ['Now'],
+                        datasets: [
+                            {
+                                label: 'Positive %',
+                                data: timelineData.posPct.length ? timelineData.posPct : [latestSentimentProportions.pos],
+                                borderColor: '#10b981',
+                                backgroundColor: posGrad,
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 5,
+                                pointHoverRadius: 9,
+                                pointBackgroundColor: isDarkMode() ? '#17142e' : '#ffffff',
+                                pointBorderColor: '#10b981',
+                                pointBorderWidth: 2
+                            },
+                            {
+                                label: 'Neutral %',
+                                data: timelineData.neuPct.length ? timelineData.neuPct : [latestSentimentProportions.neu],
+                                borderColor: '#f59e0b',
+                                backgroundColor: neuGrad,
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 5,
+                                pointHoverRadius: 9,
+                                pointBackgroundColor: isDarkMode() ? '#17142e' : '#ffffff',
+                                pointBorderColor: '#f59e0b',
+                                pointBorderWidth: 2
+                            },
+                            {
+                                label: 'Negative %',
+                                data: timelineData.negPct.length ? timelineData.negPct : [latestSentimentProportions.neg],
+                                borderColor: '#ef4444',
+                                backgroundColor: negGrad,
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 5,
+                                pointHoverRadius: 9,
+                                pointBackgroundColor: isDarkMode() ? '#17142e' : '#ffffff',
+                                pointBorderColor: '#ef4444',
+                                pointBorderWidth: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: { duration: 600, easing: 'easeOutQuart' },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: { font: { family: 'Plus Jakarta Sans', size: 12, weight: '700' }, color: textColor, usePointStyle: true }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: isDarkMode() ? 'rgba(23, 20, 46, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                                titleColor: textColor,
+                                bodyColor: textColor,
+                                padding: 14
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { family: 'JetBrains Mono', size: 10 }, color: mutedColor }
+                            },
+                            y: {
+                                min: 0,
+                                max: 100,
+                                grid: { color: isDarkMode() ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)' },
+                                ticks: { font: { family: 'JetBrains Mono', size: 10 }, color: mutedColor, callback: (v) => `${v}%` }
+                            }
+                        }
+                    }
+                });
+
+                statsGrid.innerHTML = `
+                    <div class="glass-inner p-4 rounded-2xl">
+                        <span class="text-[10px] text-purple-400 font-bold uppercase tracking-wider block">Time Buffers</span>
+                        <span class="text-xl font-extrabold text-on-background mt-1 block">${timelineData.timestamps.length || 1} Points</span>
+                        <span class="text-[10px] text-on-surface-variant">Rolling Sequence</span>
+                    </div>
+                    <div class="glass-inner p-4 rounded-2xl">
+                        <span class="text-[10px] text-indigo-400 font-bold uppercase tracking-wider block">Ingestion Source</span>
+                        <span class="text-xl font-extrabold text-indigo-400 mt-1 block">${window.currentActiveDataset ? 'Batch Upload' : 'Live Ingestion'}</span>
+                        <span class="text-[10px] text-on-surface-variant">Active Mode</span>
+                    </div>
+                    <div class="glass-inner p-4 rounded-2xl">
+                        <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block">Telemetry Status</span>
+                        <span class="text-xl font-extrabold text-emerald-400 mt-1 block">Live Active</span>
+                        <span class="text-[10px] text-on-surface-variant">Real-Time Sync</span>
+                    </div>
+                `;
+            }
+
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.classList.add('opacity-100', 'pointer-events-auto');
+            const content = document.getElementById('chart-modal-content');
+            if (content) {
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }
+        }
+
+        function closeChartModal() {
+            const modal = document.getElementById('chart-modal');
+            const content = document.getElementById('chart-modal-content');
+            if (content) {
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
+            }
+            if (modal) {
+                modal.classList.remove('opacity-100', 'pointer-events-auto');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeChartModal();
+        });
+
+        function initDashboardCharts() {
+            if (typeof Chart === 'undefined') {
+                console.warn('Chart.js library is not available');
+                return;
+            }
+            const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const textColor = getChartTextColor();
+            const mutedColor = getChartMutedColor();
+
+            // 1. Sentiment Distribution Donut Chart
+            const ctxDonutSentiment = document.getElementById('dash-sentiment-chart');
+            if (ctxDonutSentiment) {
+                dashboardDoughnutChart = new Chart(ctxDonutSentiment, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Positive', 'Neutral', 'Negative'],
+                        datasets: [{
+                            data: [0, 0, 0],
+                            backgroundColor: [
+                                'rgba(16, 185, 129, 0.85)',
+                                'rgba(245, 158, 11, 0.85)',
+                                'rgba(239, 68, 68, 0.85)'
+                            ],
+                            hoverBackgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                            borderColor: isDarkMode() ? 'rgba(23, 20, 46, 0.6)' : 'rgba(255, 255, 255, 0.8)',
+                            borderWidth: 3,
+                            borderRadius: 6,
+                            spacing: 4,
+                            hoverOffset: 12
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '68%',
+                        animation: prefersReduced ? false : { animateRotate: true, animateScale: true, duration: 800, easing: 'easeOutQuart' },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: isDarkMode() ? 'rgba(23, 20, 46, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                                titleColor: textColor,
+                                bodyColor: textColor,
+                                borderColor: isDarkMode() ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)',
+                                borderWidth: 1,
+                                padding: 12,
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` ${context.label}: ${context.raw}%`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Live Item Confidence Levels Bar Chart
+            const ctxBar = document.getElementById('live-confidence-chart');
+            if (ctxBar) {
+                liveConfidenceBarChart = new Chart(ctxBar, {
+                    type: 'bar',
+                    data: {
+                        labels: ['<50%', '50-70%', '70-90%', '>90%'],
+                        datasets: [{
+                            label: 'Ingested Items',
+                            data: [0, 0, 0, 0],
+                            backgroundColor: isDarkMode() ? '#818cf8' : '#4f46e5',
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: prefersReduced ? false : { duration: 600 },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: isDarkMode() ? '#111827' : '#ffffff',
+                                titleColor: textColor,
+                                bodyColor: textColor
+                            }
+                        },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 9, weight: '700' }, color: mutedColor } },
+                            y: { display: false }
+                        }
+                    }
+                });
+            }
+
+            // 3. Dynamic Multi-Model Benchmark Comparison Chart
+            const ctxBenchmark = document.getElementById('perf-benchmark-chart');
+            if (ctxBenchmark) {
+                perfBenchmarkChart = new Chart(ctxBenchmark, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: 'Macro F1',
+                                data: [],
+                                backgroundColor: isDarkMode() ? '#818cf8' : '#4f46e5',
+                                borderRadius: 8
+                            },
+                            {
+                                label: 'Test Accuracy',
+                                data: [],
+                                backgroundColor: isDarkMode() ? '#34d399' : '#10b981',
+                                borderRadius: 8
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: prefersReduced ? false : { duration: 800, easing: 'easeOutQuart' },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: { font: { family: 'Plus Jakarta Sans', size: 11, weight: '700' }, color: textColor, boxWidth: 12 }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: isDarkMode() ? '#111827' : '#ffffff',
+                                titleColor: textColor,
+                                bodyColor: textColor,
+                                borderColor: isDarkMode() ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                                borderWidth: 1,
+                                padding: 12
+                            }
+                        },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 10, weight: '700' }, color: textColor } },
+                            y: { min: 0.0, max: 1.0, ticks: { font: { family: 'JetBrains Mono', size: 10 }, color: mutedColor } }
+                        }
+                    }
+                });
+            }
+
+            // 4. Real-time Sentiment Trend Timeline Line Chart (Attractive Curved Gradient Area Styling & Empty Initial State)
+            const ctxTimeline = document.getElementById('live-timeline-chart');
+            if (ctxTimeline) {
+                const posGrad = ctxTimeline.getContext('2d').createLinearGradient(0, 0, 0, 200);
+                posGrad.addColorStop(0, 'rgba(16, 185, 129, 0.35)');
+                posGrad.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+                const neuGrad = ctxTimeline.getContext('2d').createLinearGradient(0, 0, 0, 200);
+                neuGrad.addColorStop(0, 'rgba(245, 158, 11, 0.35)');
+                neuGrad.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
+
+                const negGrad = ctxTimeline.getContext('2d').createLinearGradient(0, 0, 0, 200);
+                negGrad.addColorStop(0, 'rgba(239, 68, 68, 0.35)');
+                negGrad.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
+
+                liveTimelineLineChart = new Chart(ctxTimeline, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: 'Positive %',
+                                data: [],
+                                borderColor: '#10b981',
+                                backgroundColor: posGrad,
+                                borderWidth: 2.5,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 4,
+                                pointHoverRadius: 7,
+                                pointBackgroundColor: isDarkMode() ? '#17142e' : '#ffffff',
+                                pointBorderColor: '#10b981',
+                                pointBorderWidth: 2
+                            },
+                            {
+                                label: 'Neutral %',
+                                data: [],
+                                borderColor: '#f59e0b',
+                                backgroundColor: neuGrad,
+                                borderWidth: 2.5,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 4,
+                                pointHoverRadius: 7,
+                                pointBackgroundColor: isDarkMode() ? '#17142e' : '#ffffff',
+                                pointBorderColor: '#f59e0b',
+                                pointBorderWidth: 2
+                            },
+                            {
+                                label: 'Negative %',
+                                data: [],
+                                borderColor: '#ef4444',
+                                backgroundColor: negGrad,
+                                borderWidth: 2.5,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 4,
+                                pointHoverRadius: 7,
+                                pointBackgroundColor: isDarkMode() ? '#17142e' : '#ffffff',
+                                pointBorderColor: '#ef4444',
+                                pointBorderWidth: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: prefersReduced ? false : { duration: 650, easing: 'easeOutCubic' },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: { family: 'Plus Jakarta Sans', size: 11, weight: '700' },
+                                    usePointStyle: true,
+                                    pointStyle: 'circle',
+                                    color: textColor,
+                                    boxWidth: 10
+                                }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: isDarkMode() ? 'rgba(23, 20, 46, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                                titleColor: textColor,
+                                bodyColor: textColor,
+                                borderColor: isDarkMode() ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)',
+                                borderWidth: 1,
+                                padding: 12,
+                                boxPadding: 6
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { family: 'JetBrains Mono', size: 9 }, color: mutedColor }
+                            },
+                            y: {
+                                min: 0,
+                                max: 100,
+                                grid: { color: isDarkMode() ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)' },
+                                ticks: { font: { family: 'JetBrains Mono', size: 9 }, color: mutedColor }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateChartThemes() {
+            const textColor = getChartTextColor();
+            const mutedColor = getChartMutedColor();
+
+            if (dashboardDoughnutChart) {
+                dashboardDoughnutChart.data.datasets[0].borderColor = isDarkMode() ? 'rgba(23, 20, 46, 0.6)' : 'rgba(255, 255, 255, 0.8)';
+                dashboardDoughnutChart.update();
+            }
+            if (liveConfidenceBarChart) {
+                liveConfidenceBarChart.options.scales.x.ticks.color = mutedColor;
+                liveConfidenceBarChart.data.datasets[0].backgroundColor = isDarkMode() ? '#818cf8' : '#4f46e5';
+                liveConfidenceBarChart.update();
+            }
+            if (perfBenchmarkChart) {
+                perfBenchmarkChart.options.plugins.legend.labels.color = textColor;
+                perfBenchmarkChart.options.scales.x.ticks.color = textColor;
+                perfBenchmarkChart.options.scales.y.ticks.color = mutedColor;
+                perfBenchmarkChart.data.datasets[0].backgroundColor = isDarkMode() ? '#818cf8' : '#4f46e5';
+                perfBenchmarkChart.data.datasets[1].backgroundColor = isDarkMode() ? '#34d399' : '#10b981';
+                perfBenchmarkChart.update();
+            }
+            if (liveTimelineLineChart) {
+                liveTimelineLineChart.options.plugins.legend.labels.color = textColor;
+                liveTimelineLineChart.options.scales.x.ticks.color = mutedColor;
+                liveTimelineLineChart.options.scales.y.ticks.color = mutedColor;
+                liveTimelineLineChart.options.scales.y.grid.color = isDarkMode() ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)';
+                liveTimelineLineChart.data.datasets.forEach(ds => {
+                    ds.pointBackgroundColor = isDarkMode() ? '#17142e' : '#ffffff';
+                });
+                liveTimelineLineChart.update();
+            }
+        }
+
+        function updateDonutCenterText(posPct, neuPct, negPct) {
+            const centerValue = document.getElementById('donut-center-value');
+            const centerSentiment = document.getElementById('donut-center-sentiment');
+            const centerLabel = document.getElementById('donut-center-label');
+
+            if (!centerValue || !centerSentiment) return;
+
+            const total = posPct + neuPct + negPct;
+            if (total === 0) {
+                centerValue.innerText = '--';
+                centerSentiment.innerText = 'No Data';
+                centerSentiment.className = 'text-xs font-bold text-on-surface-variant uppercase';
+                if (centerLabel) centerLabel.innerText = 'Awaiting';
+                return;
+            }
+
+            // Find the dominant sentiment
+            if (posPct >= neuPct && posPct >= negPct) {
+                centerValue.innerText = `${posPct}%`;
+                centerSentiment.innerText = 'Positive';
+                centerSentiment.className = 'text-xs font-bold text-emerald-400 uppercase';
+            } else if (neuPct >= posPct && neuPct >= negPct) {
+                centerValue.innerText = `${neuPct}%`;
+                centerSentiment.innerText = 'Neutral';
+                centerSentiment.className = 'text-xs font-bold text-amber-400 uppercase';
+            } else {
+                centerValue.innerText = `${negPct}%`;
+                centerSentiment.innerText = 'Negative';
+                centerSentiment.className = 'text-xs font-bold text-rose-400 uppercase';
+            }
+            if (centerLabel) centerLabel.innerText = 'Dominant';
+        }
+
+        function updateDashboardChart(posPct, neuPct, negPct) {
+            latestSentimentProportions = { pos: posPct, neu: neuPct, neg: negPct };
+
+            document.getElementById('chart-stat-pos').innerText = `${posPct}%`;
+            document.getElementById('chart-stat-neu').innerText = `${neuPct}%`;
+            document.getElementById('chart-stat-neg').innerText = `${negPct}%`;
+
+            const srPos = document.getElementById('sr-dash-pos');
+            if (srPos) srPos.innerText = `${posPct}%`;
+            const srNeu = document.getElementById('sr-dash-neu');
+            if (srNeu) srNeu.innerText = `${neuPct}%`;
+            const srNeg = document.getElementById('sr-dash-neg');
+            if (srNeg) srNeg.innerText = `${negPct}%`;
+
+            // Update donut center text
+            updateDonutCenterText(posPct, neuPct, negPct);
+
+            if (dashboardDoughnutChart) {
+                dashboardDoughnutChart.data.datasets[0].data = [posPct, neuPct, negPct];
+                dashboardDoughnutChart.update('active');
+            }
+
+            // Push to timeline buffer
+            if (liveTimelineLineChart) {
+                const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                timelineData.timestamps.push(nowStr);
+                timelineData.posPct.push(posPct);
+                timelineData.neuPct.push(neuPct);
+                timelineData.negPct.push(negPct);
+
+                if (timelineData.timestamps.length > 7) {
+                    timelineData.timestamps.shift();
+                    timelineData.posPct.shift();
+                    timelineData.neuPct.shift();
+                    timelineData.negPct.shift();
+                }
+
+                liveTimelineLineChart.data.labels = timelineData.timestamps;
+                liveTimelineLineChart.data.datasets[0].data = timelineData.posPct;
+                liveTimelineLineChart.data.datasets[1].data = timelineData.neuPct;
+                liveTimelineLineChart.data.datasets[2].data = timelineData.negPct;
+                liveTimelineLineChart.update();
+            }
+        }
+
+        // -------------------------------------------------------------
+        // Resilient Network Client & Dynamic API Base Configuration
+        // -------------------------------------------------------------
+        function getApiBase() {
+            const custom = localStorage.getItem('SENTIMENTSCOPE_API_URL');
+            if (custom && custom.trim()) return custom.trim().replace(/\/+$/, '');
+            if (window.ENV_API_URL && window.ENV_API_URL.trim()) return window.ENV_API_URL.trim().replace(/\/+$/, '');
+            if (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                return 'http://127.0.0.1:8000';
+            }
+            // Default Render backend instance for live cloud deployment
+            return 'https://sentimentscope-iz3a.onrender.com';
+        }
+
+        function setApiBase(url) {
+            if (!url || !url.trim()) {
+                localStorage.removeItem('SENTIMENTSCOPE_API_URL');
+            } else {
+                localStorage.setItem('SENTIMENTSCOPE_API_URL', url.trim().replace(/\/+$/, ''));
+            }
+        }
+
+        async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                const apiBase = getApiBase();
+                const finalUrl = url.startsWith('http') ? url : `${apiBase}${url}`;
+                const response = await fetch(finalUrl, {
+                    ...options,
+                    signal: controller.signal
+                });
+                clearTimeout(id);
+                return response;
+            } catch (err) {
+                clearTimeout(id);
+                if (err.name === 'AbortError') {
+                    throw new Error(`Request timed out after ${timeoutMs / 1000}s`);
+                }
+                throw err;
+            }
+        }
+
+        async function checkHealth() {
+            const ind = document.getElementById('health-indicator');
+            const banner = document.getElementById('backend-offline-banner');
+            const targetEl = document.getElementById('offline-target-url');
+            const activeUrl = getApiBase();
+            if (targetEl) targetEl.innerText = activeUrl;
+
+            const startPing = performance.now();
+            try {
+                const res = await fetchWithTimeout('/health', {}, 6000);
+                const latencyMs = Math.round(performance.now() - startPing);
+                if (!res.ok) throw new Error("Status: " + res.status);
+                const data = await res.json();
+                if (data.status === 'healthy') {
+                    if (ind) ind.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse-glow";
+                    safeSetText('health-text', `API Online (${latencyMs}ms)`);
+                    if (banner) banner.classList.add('hidden');
+                    if (data.model_name) {
+                        safeSetText('dash-model-name', data.model_name);
+                        safeSetText('perf-best-model', data.model_name);
+                    }
+                    return true;
+                } else {
+                    if (ind) ind.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
+                    safeSetText('health-text', "Degraded");
+                    if (banner) banner.classList.add('hidden');
+                    return false;
+                }
+            } catch (err) {
+                console.warn("API health check failed:", err);
+                if (ind) ind.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
+                safeSetText('health-text', "Offline");
+                safeSetText('dash-model-name', "Server Offline");
+                if (banner) banner.classList.remove('hidden');
+                return false;
+            }
+        }
+
+        // Toast Helper
+        function showToast(msg, icon = 'info') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            document.getElementById('toast-icon').innerText = icon;
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        // -------------------------------------------------------------
+        // Quick & Single Sentiment Prediction
+        // -------------------------------------------------------------
+        function setSampleText(txt) {
+            document.getElementById('dash-quick-input').value = txt;
+        }
+
+        function updateCharCount() {
+            const txt = document.getElementById('single-input').value;
+            document.getElementById('single-char-count').innerText = `${txt.length} characters`;
+        }
+
+        async function runQuickPredict() {
+            const text = document.getElementById('dash-quick-input').value.trim();
+            if (!text) {
+                showToast("Please enter text before running test.", "warning");
+                return;
+            }
+
+            const btn = document.getElementById('dash-quick-btn');
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined text-base animate-spin-fast">sync</span> Processing...`;
+
+            try {
+                const res = await fetchWithTimeout('/predict', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text: text})
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Prediction failed');
+                }
+
+                const data = await res.json();
+                document.getElementById('dash-quick-result').classList.remove('hidden');
+                
+                const badge = document.getElementById('dash-res-badge');
+                badge.innerText = data.sentiment;
+                if (data.sentiment === 'positive') {
+                    badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+                } else if (data.sentiment === 'negative') {
+                    badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-rose-500/10 text-rose-400 border border-rose-500/30";
+                } else {
+                    badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-amber-500/10 text-amber-400 border border-amber-500/30";
+                }
+
+                document.getElementById('dash-prob-pos').innerText = `${(data.probabilities.positive * 100).toFixed(1)}%`;
+                document.getElementById('dash-prob-neu').innerText = `${(data.probabilities.neutral * 100).toFixed(1)}%`;
+                document.getElementById('dash-prob-neg').innerText = `${(data.probabilities.negative * 100).toFixed(1)}%`;
+
+                if (window.triggerDotFieldPulse) {
+                    window.triggerDotFieldPulse(data.sentiment);
+                }
+
+                showToast(`Analysis complete: ${data.sentiment.toUpperCase()} (${(data.confidence * 100).toFixed(1)}%)`, "check_circle");
+            } catch (err) {
+                showToast(err.message, "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined text-base">send</span> Test Sentiment`;
+            }
+        }
+
+        async function runSinglePredict() {
+            const text = document.getElementById('single-input').value.trim();
+            if (!text) {
+                showToast("Text input cannot be empty.", "warning");
+                return;
+            }
+
+            const btn = document.getElementById('single-analyze-btn');
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined text-lg animate-spin-fast">sync</span> Analyzing...`;
+
+            try {
+                const res = await fetchWithTimeout('/predict', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text: text})
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Prediction failed');
+                }
+
+                const data = await res.json();
+                
+                document.getElementById('single-sentiment-label').innerText = data.sentiment;
+                const badge = document.getElementById('single-sentiment-badge');
+                if (data.sentiment === 'positive') {
+                    badge.className = "glass-inner px-4 py-1.5 rounded-full flex items-center gap-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+                } else if (data.sentiment === 'negative') {
+                    badge.className = "glass-inner px-4 py-1.5 rounded-full flex items-center gap-2 bg-rose-500/10 text-rose-400 border border-rose-500/30";
+                } else {
+                    badge.className = "glass-inner px-4 py-1.5 rounded-full flex items-center gap-2 bg-amber-500/10 text-amber-400 border border-amber-500/30";
+                }
+
+                if (window.triggerDotFieldPulse) {
+                    window.triggerDotFieldPulse(data.sentiment);
+                }
+
+                document.getElementById('single-cleaned-text').innerText = `"${data.cleaned_text || '(no remaining stop words)'}"`;
+                document.getElementById('single-confidence').innerText = `${(data.confidence * 100).toFixed(1)}%`;
+                document.getElementById('single-confidence-bar').style.width = `${(data.confidence * 100).toFixed(1)}%`;
+
+                const posPct = (data.probabilities.positive * 100).toFixed(1);
+                const neuPct = (data.probabilities.neutral * 100).toFixed(1);
+                const negPct = (data.probabilities.negative * 100).toFixed(1);
+
+                document.getElementById('prob-val-pos').innerText = `${posPct}%`;
+                document.getElementById('prob-bar-pos').style.width = `${posPct}%`;
+
+                document.getElementById('prob-val-neu').innerText = `${neuPct}%`;
+                document.getElementById('prob-bar-neu').style.width = `${neuPct}%`;
+
+                document.getElementById('prob-val-neg').innerText = `${negPct}%`;
+                document.getElementById('prob-bar-neg').style.width = `${negPct}%`;
+
+                document.getElementById('single-latency').innerText = `${data.latency_ms} ms`;
+                if (data.pipeline_model) {
+                    const smEl = document.getElementById('single-model-meta');
+                    if (smEl) smEl.innerText = data.pipeline_model;
+                }
+                if (data.tokenizer_type) {
+                    const stEl = document.getElementById('single-tokenizer-meta');
+                    if (stEl) stEl.innerText = data.tokenizer_type;
+                }
+
+                showToast(`Single prediction executed in ${data.latency_ms}ms`, "check_circle");
+            } catch (err) {
+                showToast(err.message, "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined text-lg">auto_awesome</span> Analyze Sentiment`;
+            }
+        }
+
+        // -------------------------------------------------------------
+        // Batch File Upload Processing
+        // -------------------------------------------------------------
+        function downloadSampleCSV() {
+            const csvContent = "data:text/csv;charset=utf-8," + 
+                "text\n" +
+                "\"The customer support team was incredibly helpful and quick to resolve my issue.\"\n" +
+                "\"Package arrived on Thursday as scheduled in plain packaging.\"\n" +
+                "\"Extremely disappointed with the poor build quality, broke immediately.\"\n" +
+                "\"Fantastic experience overall! Highly recommended to everyone.\"\n" +
+                "\"Item matches description provided on the page.\"\n";
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "sample_sentiment_batch.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function handleFileSelect(evt) {
+            const files = evt.target.files;
+            if (files.length > 0) {
+                processCSV(files[0]);
+            }
+        }
+
+        const dropZone = document.getElementById('drop-zone');
+        if (dropZone) {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+                dropZone.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(evt => {
+                dropZone.addEventListener(evt, () => dropZone.classList.add('border-indigo-500', 'bg-indigo-500/5'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(evt => {
+                dropZone.addEventListener(evt, () => dropZone.classList.remove('border-indigo-500', 'bg-indigo-500/5'), false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    processCSV(files[0]);
+                }
+            });
+        }
+
+        async function processCSV(file) {
+            if (!file.name.endsWith('.csv')) {
+                showToast("Please select a valid .csv file.", "warning");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const progContainer = document.getElementById('batch-progress-container');
+            const summaryCards = document.getElementById('batch-summary-cards');
+            const tableContainer = document.getElementById('batch-results-table-container');
+            const tableBody = document.getElementById('batch-table-body');
+
+            progContainer.classList.remove('hidden');
+            document.getElementById('batch-file-name').innerText = file.name;
+            document.getElementById('batch-progress-status').innerText = "Uploading & processing batch...";
+
+            try {
+                const res = await fetchWithTimeout('/predict/batch', {
+                    method: 'POST',
+                    body: formData
+                }, 60000);
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Batch processing failed');
+                }
+
+                const data = await res.json();
+
+                document.getElementById('batch-total-rows').innerText = data.total_rows;
+                document.getElementById('batch-pos-pct').innerText = `${data.positive_pct}%`;
+                document.getElementById('batch-neu-pct').innerText = `${data.neutral_pct}%`;
+                document.getElementById('batch-neg-pct').innerText = `${data.negative_pct}%`;
+                summaryCards.classList.remove('hidden');
+
+                tableBody.innerHTML = '';
+                data.predictions.forEach((item, idx) => {
+                    const tr = document.createElement('tr');
+                    
+                    let badgeClass = "bg-amber-500/10 text-amber-400 border border-amber-500/30";
+                    if (item.sentiment === 'positive') badgeClass = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+                    if (item.sentiment === 'negative') badgeClass = "bg-rose-500/10 text-rose-400 border border-rose-500/30";
+
+                    tr.innerHTML = `
+                        <td class="p-3 font-mono text-on-surface-variant">${idx + 1}</td>
+                        <td class="p-3 font-body text-on-background max-w-md truncate" title="${item.text}">${item.text}</td>
+                        <td class="p-3"><span class="px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] ${badgeClass}">${item.sentiment}</span></td>
+                        <td class="p-3 font-semibold font-mono text-indigo-400">${(item.confidence * 100).toFixed(1)}%</td>
+                        <td class="p-3 font-mono text-on-surface-variant">${item.latency_ms}ms</td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+
+                tableContainer.classList.remove('hidden');
+
+                // Store active dataset globally so dashboard graphs persist uploaded data
+                window.currentActiveDataset = {
+                    source: 'batch_upload',
+                    total_rows: data.total_rows,
+                    positive_pct: data.positive_pct,
+                    neutral_pct: data.neutral_pct,
+                    negative_pct: data.negative_pct
+                };
+
+                // Immediately update dashboard telemetry & charts with uploaded batch dataset!
+                updateDashboardChart(data.positive_pct, data.neutral_pct, data.negative_pct);
+
+                // Also refresh the live feed table to switch to batch mode display
+                loadLiveFeed();
+
+                showToast(`Batch of ${data.total_rows} rows processed & dashboard updated!`, "check_circle");
+            } catch (err) {
+                showToast(err.message, "error");
+            } finally {
+                progContainer.classList.add('hidden');
+            }
+        }
+
+        // -------------------------------------------------------------
+        // Reports / Model Metrics Fetching & Dynamic Benchmark Chart
+        // -------------------------------------------------------------
+        async function loadMetrics() {
+            const benchSkeleton = document.getElementById('perf-benchmark-skeleton');
+            const benchError = document.getElementById('perf-benchmark-error');
+            if (benchSkeleton) benchSkeleton.classList.remove('hidden');
+            if (benchError) benchError.classList.add('hidden');
+
+            try {
+                const res = await fetchWithTimeout('/model/metrics', {}, 8000);
+                if (!res.ok) throw new Error("Metrics endpoint unavailable");
+                const data = await res.json();
+
+                const bestName = data.best_model || data.best_model_name || "Logistic Regression";
+                safeSetText('report-best-model-name', bestName);
+                safeSetText('dash-model-name', bestName);
+                safeSetText('perf-best-model', bestName);
+
+                // 1. Dynamic Benchmark Comparison Chart Update
+                if (data.models && perfBenchmarkChart) {
+                    const modelNames = Object.keys(data.models);
+                    const cvF1Scores = [];
+                    const accuracyScores = [];
+                    const srTbody = document.getElementById('sr-benchmark-tbody');
+                    if (srTbody) srTbody.innerHTML = '';
+
+                    modelNames.forEach(mName => {
+                        const mData = data.models[mName];
+                        const cvF1 = mData.cv_f1_mean !== undefined ? mData.cv_f1_mean : (mData.macro_f1 || 0);
+                        const acc = mData.accuracy || 0;
+                        cvF1Scores.push(cvF1);
+                        accuracyScores.push(acc);
+
+                        if (srTbody) {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `<td>${mName}</td><td>${(cvF1*100).toFixed(1)}%</td><td>${(acc*100).toFixed(1)}%</td>`;
+                            srTbody.appendChild(tr);
+                        }
+                    });
+
+                    perfBenchmarkChart.data.labels = modelNames;
+                    perfBenchmarkChart.data.datasets[0].data = cvF1Scores;
+                    perfBenchmarkChart.data.datasets[1].data = accuracyScores;
+                    perfBenchmarkChart.update();
+                }
+
+                // 2. Extra Grid Search / Calibration Metadata
+                if (data.winning_tfidf_params) {
+                    const tfParams = data.winning_tfidf_params;
+                    safeSetText('perf-tfidf-params', `max_features=${tfParams.max_features || 5000}, ngrams=${JSON.stringify(tfParams.ngram_range || [1,1])}`);
+                }
+                if (data.winning_lr_params) {
+                    safeSetText('perf-lr-params', `C = ${data.winning_lr_params.C || 1.0} (lbfgs solver)`);
+                }
+                if (data.calibration_eval) {
+                    const cData = data.calibration_eval;
+                    safeSetText('perf-calib-type', `${cData.winning_calibration || 'sigmoid'} (Brier: ${cData.sigmoid_brier || 0.5076} vs ${cData.uncalibrated_brier || 0.5243})`);
+                }
+
+                // 3. Primary Metrics & Confusion Matrix Update
+                let metrics = data.metrics;
+                if (!metrics && data.models && data.models[bestName]) {
+                    metrics = data.models[bestName];
+                }
+
+                if (metrics) {
+                    const acc = metrics.accuracy !== undefined ? metrics.accuracy : 0.6164;
+                    const f1 = metrics.macro_f1 !== undefined ? metrics.macro_f1 : 0.585;
+                    const prec = metrics.precision_macro !== undefined ? metrics.precision_macro : 0.6131;
+                    const rec = metrics.recall_macro !== undefined ? metrics.recall_macro : 0.5726;
+                    const brier = metrics.brier_score !== undefined ? metrics.brier_score : 0.496;
+
+                    safeSetText('dash-accuracy', `${(acc * 100).toFixed(1)}%`);
+                    safeSetText('perf-accuracy', `${(acc * 100).toFixed(1)}%`);
+                    safeSetText('perf-macro-f1', f1.toFixed(3));
+                    safeSetText('perf-brier', brier.toFixed(4));
+
+                    safeSetText('perf-prec', `${(prec * 100).toFixed(1)}%`);
+                    safeSetText('perf-rec', `${(rec * 100).toFixed(1)}%`);
+                    safeSetText('perf-f1', `${(f1 * 100).toFixed(1)}%`);
+
+                    safeSetWidth('perf-bar-prec', `${(prec * 100).toFixed(1)}%`);
+                    safeSetWidth('perf-bar-rec', `${(rec * 100).toFixed(1)}%`);
+                    safeSetWidth('perf-bar-f1', `${(f1 * 100).toFixed(1)}%`);
+
+                    safeSetText('report-f1', f1.toFixed(3));
+                    safeSetText('report-acc', acc.toFixed(3));
+
+                    if (metrics.confusion_matrix) {
+                        const cm = metrics.confusion_matrix;
+                        safeSetText('cm-00', cm[0][0]);
+                        safeSetText('cm-01', cm[0][1]);
+                        safeSetText('cm-02', cm[0][2]);
+
+                        safeSetText('cm-10', cm[1][0]);
+                        safeSetText('cm-11', cm[1][1]);
+                        safeSetText('cm-12', cm[1][2]);
+
+                        safeSetText('cm-20', cm[2][0]);
+                        safeSetText('cm-21', cm[2][1]);
+                        safeSetText('cm-22', cm[2][2]);
+                    }
+
+                    if (metrics.class_metrics) {
+                        const cm = metrics.class_metrics;
+                        if (cm.negative) {
+                            safeSetText('class-neg-p', cm.negative.precision.toFixed(2));
+                            safeSetText('class-neg-r', cm.negative.recall.toFixed(2));
+                            safeSetText('class-neg-f1', cm.negative.f1.toFixed(2));
+                        }
+                        if (cm.neutral) {
+                            safeSetText('class-neu-p', cm.neutral.precision.toFixed(2));
+                            safeSetText('class-neu-r', cm.neutral.recall.toFixed(2));
+                            safeSetText('class-neu-f1', cm.neutral.f1.toFixed(2));
+                        }
+                        if (cm.positive) {
+                            safeSetText('class-pos-p', cm.positive.precision.toFixed(2));
+                            safeSetText('class-pos-r', cm.positive.recall.toFixed(2));
+                            safeSetText('class-pos-f1', cm.positive.f1.toFixed(2));
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn("Could not fetch metrics:", err);
+                if (benchError) benchError.classList.remove('hidden');
+            } finally {
+                if (benchSkeleton) benchSkeleton.classList.add('hidden');
+            }
+        }
+
+        // -------------------------------------------------------------
+        // Live Ingestion & Telemetry Integration
+        // -------------------------------------------------------------
+        async function loadLiveStats() {
+            // If user has uploaded a batch dataset, keep displaying its telemetry on the dashboard
+            if (window.currentActiveDataset) {
+                updateDashboardChart(
+                    window.currentActiveDataset.positive_pct,
+                    window.currentActiveDataset.neutral_pct,
+                    window.currentActiveDataset.negative_pct
+                );
+                return;
+            }
+
+            const chartSkeleton = document.getElementById('dash-chart-skeleton');
+            const chartError = document.getElementById('dash-chart-error');
+            if (chartSkeleton) chartSkeleton.classList.remove('hidden');
+            if (chartError) chartError.classList.add('hidden');
+
+            try {
+                const res = await fetchWithTimeout('/live/stats?source=live', {}, 8000);
+                if (!res.ok) throw new Error("Stats endpoint unavailable");
+                const data = await res.json();
+
+                const totalCnt = data.total_count || 0;
+                const posPct = totalCnt > 0 ? (data.positive_pct || 0.0) : 0.0;
+                const neuPct = totalCnt > 0 ? (data.neutral_pct || 0.0) : 0.0;
+                const negPct = totalCnt > 0 ? (data.negative_pct || 0.0) : 0.0;
+
+                safeSetText('live-total-cnt', totalCnt);
+                safeSetText('live-pos-pct', `${posPct}%`);
+                safeSetText('live-neu-pct', `${neuPct}%`);
+                safeSetText('live-neg-pct', `${negPct}%`);
+                
+                const prunedCnt = data.rows_pruned_last_cycle !== undefined ? data.rows_pruned_last_cycle : 0;
+                safeSetText('live-pruned-info', `Pruned: ${prunedCnt} rows`);
+
+                updateDashboardChart(posPct, neuPct, negPct);
+            } catch (err) {
+                console.warn("Could not fetch live stats:", err);
+                if (chartError) chartError.classList.remove('hidden');
+            } finally {
+                if (chartSkeleton) chartSkeleton.classList.add('hidden');
+            }
+        }
+
+        async function loadLiveFeed() {
+            try {
+                const isBatchActive = !!window.currentActiveDataset;
+                const titleTextEl = document.getElementById('telemetry-title-text');
+                const badgeEl = document.getElementById('telemetry-source-badge');
+                const iconEl = document.getElementById('telemetry-icon');
+
+                if (isBatchActive) {
+                    if (titleTextEl) titleTextEl.innerText = "Uploaded Batch Predictions Telemetry";
+                    if (badgeEl) {
+                        badgeEl.innerText = "BATCH UPLOAD ACTIVE";
+                        badgeEl.className = "text-[10px] glass-inner px-3 py-1 rounded-full text-indigo-400 font-bold uppercase border border-indigo-500/20 ml-2";
+                    }
+                    if (iconEl) iconEl.innerText = "cloud_done";
+                } else {
+                    if (titleTextEl) titleTextEl.innerText = "Recent Live Feed Telemetry";
+                    if (badgeEl) {
+                        badgeEl.innerText = "LIVE STREAM ACTIVE";
+                        badgeEl.className = "text-[10px] glass-inner px-3 py-1 rounded-full text-purple-400 font-bold uppercase border border-purple-500/20 ml-2";
+                    }
+                    if (iconEl) iconEl.innerText = "rss_feed";
+                }
+
+                const sourceParam = isBatchActive ? 'batch_upload' : 'live';
+                const res = await fetchWithTimeout(`/live/feed?limit=25&source=${sourceParam}`, {}, 8000);
+                if (!res.ok) return;
+                const items = await res.json();
+
+                const tbody = document.getElementById('live-feed-table-body');
+                if (!items || items.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-5 text-center text-on-surface-variant italic">No telemetry stored yet. Upload a CSV batch or click "Fetch Live Posts".</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                const confBins = [0, 0, 0, 0]; // <50%, 50-70%, 70-90%, >90%
+
+                items.forEach(item => {
+                    const tr = document.createElement('tr');
+                    
+                    let badgeClass = "bg-amber-500/10 text-amber-400 border border-amber-500/30";
+                    if (item.sentiment === 'positive') badgeClass = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+                    if (item.sentiment === 'negative') badgeClass = "bg-rose-500/10 text-rose-400 border border-rose-500/30";
+
+                    const conf = item.confidence || 0;
+                    if (conf < 0.5) confBins[0]++;
+                    else if (conf < 0.7) confBins[1]++;
+                    else if (conf < 0.9) confBins[2]++;
+                    else confBins[3]++;
+
+                    const timeStr = item.created_at ? new Date(item.created_at).toLocaleTimeString() : 'Just now';
+
+                    tr.innerHTML = `
+                        <td class="p-3.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">${item.source || 'batch'}</span></td>
+                        <td class="p-3.5 font-body text-on-background max-w-md truncate" title="${item.text}">${item.text}</td>
+                        <td class="p-3.5"><span class="px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] ${badgeClass}">${item.sentiment}</span></td>
+                        <td class="p-3.5 font-mono font-bold text-indigo-400">${(conf * 100).toFixed(1)}%</td>
+                        <td class="p-3.5 font-mono text-on-surface-variant text-[11px]">${timeStr}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                if (liveConfidenceBarChart) {
+                    liveConfidenceBarChart.data.datasets[0].data = confBins;
+                    liveConfidenceBarChart.update();
+                }
+            } catch (err) {
+                console.warn("Could not fetch live feed:", err);
+            }
+        }
+
+        async function triggerLiveFetch() {
+            const input = document.getElementById('live-kw-input');
+            const keyword = input.value.trim();
+            if (!keyword) {
+                showToast("Please enter a valid search keyword.", "warning");
+                return;
+            }
+
+            const btn = document.getElementById('live-trigger-btn');
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined text-sm animate-spin-fast">sync</span> Ingesting...`;
+
+            try {
+                window.currentActiveDataset = null; // Clear batch dataset lock so live ingested posts take precedence
+                const res = await fetchWithTimeout(`/live/trigger?keyword=${encodeURIComponent(keyword)}`, {
+                    method: 'POST'
+                }, 20000);
+
+                if (res.status === 429) {
+                    const err = await res.json();
+                    showToast(err.detail || "Keyword is in cooldown.", "warning");
+                    return;
+                }
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || "Live fetch failed");
+                }
+
+                const data = await res.json();
+                showToast(`Live fetch for '${data.keyword}': Ingested ${data.ingested_count} posts.`, "check_circle");
+                
+                loadLiveStats();
+                loadLiveFeed();
+            } catch (err) {
+                showToast(err.message, "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined text-sm">sync</span> Fetch Live Posts`;
+            }
+        }
+
+        // Initialize on load
+        async function initApp() {
+            initDashboardCharts();
+            const isOnline = await checkHealth();
+            if (isOnline) {
+                await Promise.allSettled([
+                    loadMetrics(),
+                    loadLiveStats(),
+                    loadLiveFeed()
+                ]);
+            }
+        }
+
+        // -------------------------------------------------------------
+        // Backend API Settings Modal Handlers
+        // -------------------------------------------------------------
+        function openApiConfigModal() {
+            const modal = document.getElementById('api-config-modal');
+            const input = document.getElementById('api-url-input');
+            const results = document.getElementById('api-test-results');
+            if (results) results.classList.add('hidden');
+            if (input) input.value = getApiBase();
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeApiConfigModal() {
+            const modal = document.getElementById('api-config-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function setApiInput(val) {
+            const input = document.getElementById('api-url-input');
+            if (input) input.value = val;
+        }
+
+        async function testApiUrl() {
+            const input = document.getElementById('api-url-input');
+            const testUrl = (input.value || '').trim().replace(/\/+$/, '');
+            const btn = document.getElementById('btn-test-api');
+            const results = document.getElementById('api-test-results');
+            const dot = document.getElementById('api-test-dot');
+            const msg = document.getElementById('api-test-msg');
+            const latEl = document.getElementById('api-test-latency');
+
+            if (!testUrl) {
+                showToast("Please enter a valid URL.", "warning");
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<span class="material-symbols-outlined text-xs animate-spin-fast">sync</span> Pinging...`;
+            }
+
+            const startTime = performance.now();
+            try {
+                const res = await fetch(`${testUrl}/health`, { method: 'GET' });
+                const ping = Math.round(performance.now() - startTime);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                
+                results.className = "p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-[11px] flex items-center justify-between";
+                dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+                msg.innerText = `Connected: ${data.model_name || 'API Ready'}`;
+                latEl.innerText = `${ping}ms`;
+                results.classList.remove('hidden');
+            } catch (err) {
+                const ping = Math.round(performance.now() - startTime);
+                results.className = "p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 text-[11px] flex items-center justify-between";
+                dot.className = "w-2 h-2 rounded-full bg-rose-400";
+                msg.innerText = `Connection Failed: ${err.message || 'Offline'}`;
+                latEl.innerText = `${ping}ms`;
+                results.classList.remove('hidden');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<span class="material-symbols-outlined text-xs">network_check</span> Test Ping`;
+                }
+            }
+        }
+
+        function saveApiConfig() {
+            const input = document.getElementById('api-url-input');
+            const val = (input.value || '').trim();
+            setApiBase(val);
+            closeApiConfigModal();
+            showToast(`Backend target set to: ${getApiBase()}`, "check_circle");
+            initApp();
+        }
+
+        function resetApiConfig() {
+            localStorage.removeItem('SENTIMENTSCOPE_API_URL');
+            const input = document.getElementById('api-url-input');
+            if (input) input.value = getApiBase();
+            closeApiConfigModal();
+            showToast("Reset to default API URL", "info");
+            initApp();
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+
+    <!-- Backend API Configuration Modal -->
+    <div id="api-config-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in-up" role="dialog" aria-modal="true" aria-labelledby="api-modal-title">
+        <div class="glass-card max-w-lg w-full p-6 rounded-2xl border border-card-border shadow-2xl relative">
+            <div class="flex items-center justify-between pb-4 border-b border-card-border">
+                <div class="flex items-center gap-2.5">
+                    <span class="p-2 rounded-xl bg-indigo-500/10 text-primary border border-indigo-500/20 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-lg">dns</span>
+                    </span>
+                    <div>
+                        <h3 id="api-modal-title" class="text-base font-headline font-bold text-on-background">Backend API Settings</h3>
+                        <p class="text-xs text-on-surface-variant">Configure target cloud API endpoint (Render / Localhost)</p>
+                    </div>
+                </div>
+                <button onclick="closeApiConfigModal()" class="p-1.5 rounded-lg text-on-surface-variant hover:text-on-background hover:bg-card-border/40 transition-colors" aria-label="Close API configuration dialog">
+                    <span class="material-symbols-outlined text-xl">close</span>
+                </button>
+            </div>
+
+            <div class="space-y-4 py-4 text-xs font-body">
+                <div>
+                    <label for="api-url-input" class="block text-xs font-semibold text-on-background mb-1.5">Backend Service URL</label>
+                    <div class="relative">
+                        <input type="url" id="api-url-input" class="w-full glass-inner px-3.5 py-2.5 rounded-xl text-xs font-mono text-on-background border border-card-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all pr-24" placeholder="https://your-service.onrender.com" />
+                        <button onclick="testApiUrl()" id="btn-test-api" class="absolute right-1.5 top-1.5 px-2.5 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-[11px] border border-indigo-500/20 transition-all flex items-center gap-1">
+                            <span class="material-symbols-outlined text-xs">network_check</span> Test Ping
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-on-surface-variant mt-1.5">Enter your Render service URL (e.g. <code class="font-mono text-indigo-400">https://sentimentscope-iz3a.onrender.com</code>) or local address.</p>
+                </div>
+
+                <!-- Presets -->
+                <div class="flex flex-wrap gap-2 pt-1">
+                    <button type="button" onclick="setApiInput('https://sentimentscope-iz3a.onrender.com')" class="px-2.5 py-1 rounded-lg glass-inner hover:border-primary/40 text-on-surface-variant hover:text-primary text-[11px] transition-all flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[12px] text-purple-400">cloud</span> Render Production
+                    </button>
+                    <button type="button" onclick="setApiInput('http://127.0.0.1:8000')" class="px-2.5 py-1 rounded-lg glass-inner hover:border-primary/40 text-on-surface-variant hover:text-primary text-[11px] transition-all flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[12px] text-indigo-400">terminal</span> Localhost (8000)
+                    </button>
+                </div>
+
+                <!-- Test Connection Results Box -->
+                <div id="api-test-results" class="hidden p-3 rounded-xl border text-[11px] flex items-center justify-between">
+                    <div class="flex items-center gap-2" id="api-test-msg-container">
+                        <span class="w-2 h-2 rounded-full" id="api-test-dot"></span>
+                        <span id="api-test-msg" class="font-semibold"></span>
+                    </div>
+                    <span id="api-test-latency" class="font-mono text-[10px] text-on-surface-variant"></span>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-card-border gap-2">
+                <button onclick="resetApiConfig()" class="px-3 py-2 rounded-xl text-xs font-semibold text-on-surface-variant hover:text-error transition-colors flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">restart_alt</span> Reset Default
+                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="closeApiConfigModal()" class="px-4 py-2 rounded-xl text-xs font-semibold glass-inner hover:bg-card-border/40 text-on-background transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="saveApiConfig()" class="px-4 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-white shadow-md transition-all flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-sm">save</span> Save & Connect
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
