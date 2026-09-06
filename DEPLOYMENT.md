@@ -29,6 +29,19 @@ This document details the complete step-by-step deployment guide for **Sentiment
 
 ---
 
+## 📁 Repository Layout & Source of Truth
+
+The repository contains two parallel pairs of directories:
+
+| Component | Production Source of Truth (Active) | Auxiliary / Mirror Copy | Notes & Usage |
+| :--- | :--- | :--- | :--- |
+| **Backend API** | `src/api.py` | `backend/src/api.py` | **`src/api.py`** is copied into the Docker container by `Dockerfile` (lines 31 & 41) and executed on Render (`uvicorn src.api:app`). `backend/src/api.py` is used for isolated local backend runs (`cd backend`) and legacy Vercel serverless imports (`api/index.py`). Both are kept strictly in sync. |
+| **Frontend Web SPA** | `public/index.html` | `frontend/index.html` | **`public/index.html`** is served directly by Vercel via `vercel.json` (`outputDirectory: "public"`) and baked into Render's container as static fallback (`COPY public/ ./public/`). `frontend/index.html` is kept 100% bit-for-bit identical for Vercel configurations that set Root Directory to `frontend`. |
+
+> **Rule for Contributors & Agents**: Any changes to API logic or frontend limits (e.g., batch row limits, timeouts, file size checks) must be applied to both `src/api.py` and `backend/src/api.py`, and to both `public/index.html` and `frontend/index.html`.
+
+---
+
 ## 🚀 1. Backend Deployment (Render.com)
 
 ### Step 1: Create Blueprint Service on Render
