@@ -2228,8 +2228,8 @@
             if (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                 return 'http://127.0.0.1:8000';
             }
-            // Default Render backend instance for live cloud deployment
-            return 'https://sentimentscope-iz3a.onrender.com';
+            // Default to current origin (Vercel serverless function) when deployed to cloud host
+            return window.location.origin;
         }
 
         function setApiBase(url) {
@@ -3008,8 +3008,11 @@
 
                 <!-- Presets -->
                 <div class="flex flex-wrap gap-2 pt-1">
+                    <button type="button" onclick="setApiInput(window.location.origin)" class="px-2.5 py-1 rounded-lg glass-inner hover:border-primary/40 text-on-surface-variant hover:text-primary text-[11px] transition-all flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[12px] text-emerald-400">bolt</span> Vercel API (Same Origin)
+                    </button>
                     <button type="button" onclick="setApiInput('https://sentimentscope-iz3a.onrender.com')" class="px-2.5 py-1 rounded-lg glass-inner hover:border-primary/40 text-on-surface-variant hover:text-primary text-[11px] transition-all flex items-center gap-1">
-                        <span class="material-symbols-outlined text-[12px] text-purple-400">cloud</span> Render Production
+                        <span class="material-symbols-outlined text-[12px] text-purple-400">cloud</span> Render Server
                     </button>
                     <button type="button" onclick="setApiInput('http://127.0.0.1:8000')" class="px-2.5 py-1 rounded-lg glass-inner hover:border-primary/40 text-on-surface-variant hover:text-primary text-[11px] transition-all flex items-center gap-1">
                         <span class="material-symbols-outlined text-[12px] text-indigo-400">terminal</span> Localhost (8000)

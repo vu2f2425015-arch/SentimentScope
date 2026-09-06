@@ -283,6 +283,7 @@ def run_inference(raw_text: str) -> Dict[str, Any]:
 
 
 @app.get("/health")
+@app.get("/api/health")
 def health():
     """
     Health check endpoint returning service status, model state, and version.
@@ -324,6 +325,7 @@ def root():
 
 
 @app.post("/predict", response_model=PredictResponse)
+@app.post("/api/predict", response_model=PredictResponse)
 def predict(payload: PredictRequest):
     """
     Accepts text input and returns 3-class sentiment prediction, confidence score, and class probabilities.
@@ -338,6 +340,7 @@ def predict(payload: PredictRequest):
 
 
 @app.post("/predict/batch", response_model=BatchSummary)
+@app.post("/api/predict/batch", response_model=BatchSummary)
 async def predict_batch(file: UploadFile = File(...)):
     """
     Accepts a CSV file upload, processes each text row, and returns per-row predictions and aggregate summary.
@@ -405,6 +408,7 @@ async def predict_batch(file: UploadFile = File(...)):
 
 
 @app.get("/live/feed")
+@app.get("/api/live/feed")
 def get_live_feed(limit: int = 50, source: Optional[str] = "live"):
     """
     Returns recent predictions from the rolling SQLite store.
@@ -414,6 +418,7 @@ def get_live_feed(limit: int = 50, source: Optional[str] = "live"):
 
 
 @app.get("/live/stats")
+@app.get("/api/live/stats")
 def get_live_stats(source: Optional[str] = "live"):
     """
     Returns rolling sentiment statistics and retention pruning telemetry (oldest record timestamp & rows pruned last cycle).
@@ -423,6 +428,7 @@ def get_live_stats(source: Optional[str] = "live"):
 
 
 @app.post("/live/trigger")
+@app.post("/api/live/trigger")
 def trigger_live_ingestion(keyword: Optional[str] = "ai"):
     """
     Manually triggers live post ingestion for a given keyword.
@@ -446,6 +452,7 @@ def trigger_live_ingestion(keyword: Optional[str] = "ai"):
 
 
 @app.get("/model/metrics")
+@app.get("/api/model/metrics")
 def get_model_metrics():
     """
     Returns stored evaluation metrics for the currently loaded model and model comparisons.

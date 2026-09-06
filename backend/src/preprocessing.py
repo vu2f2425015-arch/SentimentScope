@@ -16,12 +16,20 @@ NEGATION_WORDS = {
 
 # Ensure required NLTK resources are downloaded
 def _init_nltk():
+    import os
+    tmp_dir = os.path.join("/tmp", "nltk_data")
+    if os.path.exists("/tmp") and tmp_dir not in nltk.data.path:
+        nltk.data.path.append(tmp_dir)
+        
     resources = ['stopwords', 'wordnet', 'punkt', 'punkt_tab', 'omw-1.4']
     for resource in resources:
         try:
             nltk.data.find(f'tokenizers/{resource}' if 'punkt' in resource else f'corpora/{resource}')
         except LookupError:
-            nltk.download(resource, quiet=True)
+            try:
+                nltk.download(resource, download_dir=tmp_dir if os.path.exists("/tmp") else None, quiet=True)
+            except Exception:
+                nltk.download(resource, quiet=True)
 
 _init_nltk()
 
@@ -29,7 +37,7 @@ _lemmatizer = WordNetLemmatizer()
 try:
     _stop_words = set(stopwords.words('english')) - NEGATION_WORDS
 except Exception:
-    nltk.download('stopwords', quiet=True)
+    _init_nltk()
     _stop_words = set(stopwords.words('english')) - NEGATION_WORDS
 
 
