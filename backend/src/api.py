@@ -55,60 +55,63 @@ def load_model_state():
         print(f"[API Warning] Best model metadata not found at '{meta_path}'. Please run training first.")
         return
 
-    with open(meta_path, "r") as f:
-        meta = json.load(f)
+    try:
+        with open(meta_path, "r") as f:
+            meta = json.load(f)
+            
+        best_name = meta["best_model_name"]
+        details = meta["details"]
+        model_type = details["type"]
         
-    best_name = meta["best_model_name"]
-    details = meta["details"]
-    model_type = details["type"]
-    
-    artifact_path = os.path.join(MODELS_DIR, details["artifact"])
-    if model_type == "sklearn":
-        model = joblib.load(artifact_path)
-        vectorizer_path = os.path.join(MODELS_DIR, details["vectorizer"])
-        vectorizer = joblib.load(vectorizer_path)
-        model_state["type"] = "sklearn"
-        model_state["model"] = model
-        model_state["vectorizer"] = vectorizer
-    elif model_type == "keras":
-        import tensorflow as tf
-        model = tf.keras.models.load_model(artifact_path)
-        tokenizer_path = os.path.join(MODELS_DIR, details["tokenizer"])
-        seq_extractor = SequentialExtractor.load(tokenizer_path, max_len=150)
-        model_state["type"] = "keras"
-        model_state["model"] = model
-        model_state["tokenizer"] = seq_extractor
-    elif model_type == "transformer":
-        import torch
-        from transformers import AutoTokenizer, AutoModelForSequenceClassification
-        tokenizer_path = os.path.join(MODELS_DIR, details["tokenizer"])
-        if not os.path.exists(artifact_path):
-            print(f"[API Warning] Transformer artifact directory '{artifact_path}' not found. Falling back to default pretrained checkpoint.")
-            artifact_path = "distilbert-base-uncased"
-            tokenizer_path = "distilbert-base-uncased"
-        
-        tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-        model = AutoModelForSequenceClassification.from_pretrained(artifact_path, num_labels=3)
-        model.eval()
-        model_state["type"] = "transformer"
-        model_state["model"] = model
-        model_state["tokenizer"] = tokenizer
-        model_state["max_len"] = 64
+        artifact_path = os.path.join(MODELS_DIR, details["artifact"])
+        if model_type == "sklearn":
+            model = joblib.load(artifact_path)
+            vectorizer_path = os.path.join(MODELS_DIR, details["vectorizer"])
+            vectorizer = joblib.load(vectorizer_path)
+            model_state["type"] = "sklearn"
+            model_state["model"] = model
+            model_state["vectorizer"] = vectorizer
+        elif model_type == "keras":
+            import tensorflow as tf
+            model = tf.keras.models.load_model(artifact_path)
+            tokenizer_path = os.path.join(MODELS_DIR, details["tokenizer"])
+            seq_extractor = SequentialExtractor.load(tokenizer_path, max_len=150)
+            model_state["type"] = "keras"
+            model_state["model"] = model
+            model_state["tokenizer"] = seq_extractor
+        elif model_type == "transformer":
+            import torch
+            from transformers import AutoTokenizer, AutoModelForSequenceClassification
+            tokenizer_path = os.path.join(MODELS_DIR, details["tokenizer"])
+            if not os.path.exists(artifact_path):
+                print(f"[API Warning] Transformer artifact directory '{artifact_path}' not found. Falling back to default pretrained checkpoint.")
+                artifact_path = "distilbert-base-uncased"
+                tokenizer_path = "distilbert-base-uncased"
+            
+            tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+            model = AutoModelForSequenceClassification.from_pretrained(artifact_path, num_labels=3)
+            model.eval()
+            model_state["type"] = "transformer"
+            model_state["model"] = model
+            model_state["tokenizer"] = tokenizer
+            model_state["max_len"] = 64
 
-    model_state["name"] = best_name
-    model_state["metrics"] = meta.get("metrics", {})
-    
-    # Warmup NLTK and model inference to avoid first-call cold-start overhead
-    _ = clean_text("Warmup initial text load")
-    if model_state["type"] == "sklearn":
-        _ = model_state["model"].predict_proba(model_state["vectorizer"].transform(["warmup"]).toarray())
-    elif model_state["type"] == "transformer":
-        import torch
-        inputs = model_state["tokenizer"]("Warmup initial text load", max_length=64, padding=True, truncation=True, return_tensors="pt")
-        with torch.no_grad():
-            _ = model_state["model"](**inputs)
-    
-    print(f"[API] Successfully loaded best model '{best_name}' ({model_type}).")
+        model_state["name"] = best_name
+        model_state["metrics"] = meta.get("metrics", {})
+        
+        # Warmup NLTK and model inference to avoid first-call cold-start overhead
+        _ = clean_text("Warmup initial text load")
+        if model_state["type"] == "sklearn":
+            _ = model_state["model"].predict_proba(model_state["vectorizer"].transform(["warmup"]).toarray())
+        elif model_state["type"] == "transformer":
+            import torch
+            inputs = model_state["tokenizer"]("Warmup initial text load", max_length=64, padding=True, truncation=True, return_tensors="pt")
+            with torch.no_grad():
+                _ = model_state["model"](**inputs)
+        
+        print(f"[API] Successfully loaded best model '{best_name}' ({model_type}).")
+    except Exception as err:
+        print(f"[API Error] Failed to load model artifact: {err}")
 
 
 @asynccontextmanager
