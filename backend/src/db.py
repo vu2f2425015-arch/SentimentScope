@@ -15,13 +15,21 @@ def get_db_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
     Creates and returns a SQLite connection configured with WAL mode and busy timeout.
     """
     target_path = db_path or DEFAULT_DB_PATH
-    os.makedirs(os.path.dirname(os.path.abspath(target_path)), exist_ok=True)
+    try:
+        os.makedirs(os.path.dirname(os.path.abspath(target_path)), exist_ok=True)
+    except Exception:
+        pass
     
     conn = sqlite3.connect(target_path, timeout=10.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
-    # Enable Write-Ahead Logging (WAL) for concurrency and prevent lock errors
-    conn.execute("PRAGMA journal_mode=WAL;")
-    conn.execute("PRAGMA busy_timeout=5000;")
+    try:
+        conn.execute("PRAGMA journal_mode=WAL;")
+    except Exception:
+        pass
+    try:
+        conn.execute("PRAGMA busy_timeout=5000;")
+    except Exception:
+        pass
     return conn
 
 
@@ -29,25 +37,28 @@ def init_db(db_path: Optional[str] = None):
     """
     Initializes the SQLite schema for storing predictions.
     """
-    with get_db_connection(db_path) as conn:
-        cursor = conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS predictions_store (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                source TEXT NOT NULL,
-                external_id TEXT UNIQUE,
-                text TEXT NOT NULL,
-                cleaned_text TEXT,
-                sentiment TEXT NOT NULL,
-                confidence REAL NOT NULL,
-                probabilities_json TEXT NOT NULL,
-                latency_ms REAL NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        """)
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_source ON predictions_store(source);")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_created_at ON predictions_store(created_at);")
-        conn.commit()
+    try:
+        with get_db_connection(db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS predictions_store (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    source TEXT NOT NULL,
+                    external_id TEXT UNIQUE,
+                    text TEXT NOT NULL,
+                    cleaned_text TEXT,
+                    sentiment TEXT NOT NULL,
+                    confidence REAL NOT NULL,
+                    probabilities_json TEXT NOT NULL,
+                    latency_ms REAL NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_source ON predictions_store(source);")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_created_at ON predictions_store(created_at);")
+            conn.commit()
+    except Exception as e:
+        print(f"[DB Warning] init_db error: {e}")
 
 
 def prune_old_records(max_rows: Optional[int] = None, db_path: Optional[str] = None) -> int:
