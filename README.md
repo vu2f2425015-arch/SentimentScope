@@ -329,9 +329,9 @@ docker run -d -p 8000:8000 --env-file .env --name sentimentscope_app sentimentsc
 
 ## ☁️ Production Deployment
 
-SentimentScope supports dual-cloud production deployment with **Vercel** (Static Frontend SPA) and **Railway** (FastAPI ML Container Backend).
+SentimentScope supports dual-cloud production deployment with **Vercel** (Static Frontend SPA) and **Render** (100% Free FastAPI ML Container Backend).
 
-For complete step-by-step instructions, CORS configuration, environment variables, volume mounting, and verification steps, see the master [DEPLOYMENT.md](DEPLOYMENT.md) guide.
+For complete step-by-step instructions, CORS configuration, environment variables, and verification steps, see the master [DEPLOYMENT.md](DEPLOYMENT.md) guide.
 
 ---
 

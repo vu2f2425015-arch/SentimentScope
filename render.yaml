@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: sentimentscope-api
+    env: docker
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: ALLOWED_ORIGINS
+        value: https://sentimentscope.vercel.app,http://localhost:3000
+      - key: MODELS_DIR
+        value: models
+      - key: REPORTS_DIR
+        value: reports
+      - key: ENABLE_LIVE_INGESTION
+        value: "true"
+      - key: INGESTION_DB_PATH
+        value: data/rolling_store.db
