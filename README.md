@@ -327,48 +327,11 @@ docker run -d -p 8000:8000 --env-file .env --name sentimentscope_app sentimentsc
 
 ---
 
-## ☁️ Production Deployment Guide
+## ☁️ Production Deployment
 
-### Vercel Full-Stack Serverless (Recommended)
+SentimentScope supports dual-cloud production deployment with **Vercel** (Static Frontend SPA) and **Railway** (FastAPI ML Container Backend).
 
-1. **Import Repository**: Connect your GitHub repository (`SentimentScope`) in the [Vercel Dashboard](https://vercel.com).
-2. **Project Settings**:
-   - Framework Preset: `Other`
-   - Root Directory: `./` (leave empty / default)
-3. **Deploy**: Click **Deploy**. Vercel automatically builds both the frontend static site and the Python Serverless API.
-
-### Option 2: Deploy on Railway
-
-1. **New Project**: Select **Deploy from GitHub Repo**.
-2. **Settings**: Railway automatically detects the root `Dockerfile`.
-3. **Variables**:
-   - `PORT`: `8000`
-   - `ALLOWED_ORIGINS`: `https://<your-railway-app>.up.railway.app`
-4. **Health Check**: Set endpoint `/health`.
-
-### Option 3: Deploy on Fly.io
-
-1. **Launch App**: Run the Fly CLI initialization:
-   ```bash
-   fly launch
-   ```
-2. **Configuration (`fly.toml`)**: Ensure the internal port is configured to `8000`:
-   ```toml
-   [http_service]
-     internal_port = 8000
-     force_https = true
-
-   [[http_service.checks]]
-     grace_period = "10s"
-     interval = "15s"
-     method = "get"
-     path = "/health"
-     timeout = "5s"
-   ```
-3. **Deploy**:
-   ```bash
-   fly deploy
-   ```
+For complete step-by-step instructions, CORS configuration, environment variables, volume mounting, and verification steps, see the master [DEPLOYMENT.md](DEPLOYMENT.md) guide.
 
 ---
 

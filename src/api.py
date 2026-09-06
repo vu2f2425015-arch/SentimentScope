@@ -129,17 +129,16 @@ app = FastAPI(
 )
 
 # Configurable CORS via environment variable ALLOWED_ORIGINS
-raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000,http://localhost:3000,http://127.0.0.1:3000,*")
+raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000,http://localhost:3000,http://127.0.0.1:3000")
+origins = [o.strip() for o in raw_origins.split(",") if o.strip() and o.strip() != "*"]
 is_wildcard = "*" in [o.strip() for o in raw_origins.split(",")]
 
 if is_wildcard:
     origins = ["*"]
-else:
-    origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=origins if not is_wildcard else ["*"],
     allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=False if is_wildcard else True,
     allow_methods=["*"],

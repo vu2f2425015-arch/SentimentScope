@@ -2223,18 +2223,20 @@
         // -------------------------------------------------------------
         function getApiBase() {
             const custom = localStorage.getItem('SENTIMENTSCOPE_API_URL');
-            // If browser stored an old dead Render URL from previous sessions, clear it so it auto-uses Vercel API
+            // Clear legacy stale provider URLs
             if (custom && (custom.includes('onrender.com') || custom.includes('sentimentscope-iz3a'))) {
                 localStorage.removeItem('SENTIMENTSCOPE_API_URL');
             } else if (custom && custom.trim()) {
                 return custom.trim().replace(/\/+$/, '');
             }
             if (window.ENV_API_URL && window.ENV_API_URL.trim()) return window.ENV_API_URL.trim().replace(/\/+$/, '');
+            const metaUrl = document.querySelector('meta[name="api-base-url"]')?.getAttribute('content');
+            if (metaUrl && metaUrl.trim() && !metaUrl.includes('__RAILWAY_URL__')) return metaUrl.trim().replace(/\/+$/, '');
             if (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                 return 'http://127.0.0.1:8000';
             }
-            // Default to current origin (Vercel serverless function) when deployed to cloud host
-            return window.location.origin;
+            // Default to Railway backend service when hosted on Vercel or cloud CDN
+            return 'https://sentimentscope-production.up.railway.app';
         }
 
         function setApiBase(url) {
@@ -3033,8 +3035,8 @@
 
                 <!-- Presets -->
                 <div class="flex flex-wrap gap-2 pt-1">
-                    <button type="button" onclick="setApiInput(window.location.origin)" class="px-2.5 py-1 rounded-lg glass-inner hover:border-primary/40 text-on-surface-variant hover:text-primary text-[11px] transition-all flex items-center gap-1">
-                        <span class="material-symbols-outlined text-[12px] text-emerald-400">bolt</span> Vercel API (Same Origin)
+                    <button type="button" onclick="setApiInput('https://sentimentscope-production.up.railway.app')" class="px-2.5 py-1 rounded-lg glass-inner hover:border-primary/40 text-on-surface-variant hover:text-primary text-[11px] transition-all flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[12px] text-purple-400">train</span> Railway Backend
                     </button>
                     <button type="button" onclick="setApiInput('http://127.0.0.1:8000')" class="px-2.5 py-1 rounded-lg glass-inner hover:border-primary/40 text-on-surface-variant hover:text-primary text-[11px] transition-all flex items-center gap-1">
                         <span class="material-symbols-outlined text-[12px] text-indigo-400">terminal</span> Localhost (8000)
