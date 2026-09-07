@@ -86,7 +86,6 @@ SentimentScope/
 ├── Dockerfile                # Production container specification (Render.com)
 ├── docker-compose.yml        # Multi-container orchestration
 ├── render.yaml               # Render Blueprint infrastructure definition
-├── vercel.json               # Vercel static Edge CDN deployment configuration
 ├── requirements.txt          # Python production dependencies
 └── README.md                 # Project documentation
 ```

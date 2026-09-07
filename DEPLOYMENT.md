@@ -1,12 +1,16 @@
-# SentimentScope Dual-Cloud Deployment Guide (Vercel + Render)
+# SentimentScope Production Deployment Guide (Render.com)
 
-This document details the complete step-by-step deployment guide for **SentimentScope**:
-- **Frontend SPA**: Hosted on **Vercel** (Global Static Edge CDN).
-- **Backend API & ML Inference Engine**: Hosted inside a Docker container on **Render** (100% Free Web Service, no credit card required).
+This document details the deployment guide for **SentimentScope** hosted on **Render** (100% Free Web Service with Docker).
 
 ---
 
 ## 🏗 Architecture Overview
+
+SentimentScope runs as a unified, full-stack application inside a single Docker container on Render:
+- **Interactive Web SPA**: Served directly at the root URL (`/`) from `public/index.html`.
+- **FastAPI REST Server**: High-performance asynchronous backend running via Uvicorn.
+- **Machine Learning Inference**: Pre-loaded scikit-learn models (Logistic Regression, MNB, Bi-LSTM) and Hugging Face Transformers.
+- **Interactive Documentation**: Swagger UI at `/docs` and ReDoc at `/redoc`.
 
 ```
 +-------------------------------------------------------------------+
@@ -14,41 +18,40 @@ This document details the complete step-by-step deployment guide for **Sentiment
 +-------------------------------------------------------------------+
                                   |
                                   v
-+---------------------------------+---------------------------------+
-| Vercel Global Edge CDN          | Render Free Web Service         |
-| - Static public/index.html SPA  | - FastAPI REST Server (Uvicorn) |
-| - Dynamic ENV_API_URL binding   | - Scikit-Learn / ML Inference   |
-| - Zero serverless cold-starts   | - Auto-detected render.yaml     |
-+---------------------------------+---------------------------------+
++-------------------------------------------------------------------+
+|                     Render Cloud Web Service                      |
+|                  https://<app-name>.onrender.com                  |
+|                                                                   |
+| - Root (GET /)            -> Serves public/index.html SPA         |
+| - Health (GET /health)    -> Service uptime & model telemetry     |
+| - Predict (POST /predict) -> Real-time & batch sentiment analysis |
+| - Docs (GET /docs)        -> Interactive OpenAPI Swagger UI       |
++-------------------------------------------------------------------+
 ```
-
-### Key Technical Advantages
-1. **100% Free Tier**: Render provides free Docker container web services without requiring a credit card or trial expiration.
-2. **Decoupled Architecture**: Frontend static assets load instantly via Vercel's global CDN; heavy ML inference runs in a dedicated Python container on Render.
-3. **Dynamic CORS Protection**: `CORSMiddleware` in `src/api.py` uses `allow_origin_regex=r"https://.*\.vercel\.app"` to dynamically authorize Vercel production and preview deployment URLs while respecting environment-configured `ALLOWED_ORIGINS`.
 
 ---
 
 ## 📁 Repository Layout & Source of Truth
 
-The repository maintains a clean, decoupled single-source-of-truth structure:
+The repository maintains a clean, single-source-of-truth structure:
 
 | Component | Canonical Location | Deployment / Serving Target | Description |
 | :--- | :--- | :--- | :--- |
 | **Backend API & ML Engine** | `src/api.py` | Render Web Service (`Dockerfile`) | FastAPI REST API containerized with Uvicorn, scikit-learn, PyTorch, and live ingestion. |
-| **Frontend Web SPA** | `public/index.html` | Vercel Static CDN (`vercel.json`) | Single-page reactive dashboard with dynamic charts and live particle telemetry. |
-| **UI Reference Components** | `references/DotField/` | Source Archive | Reference React/TSX components preserved for Next.js/React migrations. |
+| **Frontend Web SPA** | `public/index.html` | Render Container (`/`) | Single-page reactive dashboard with dynamic charts and live particle telemetry. |
+| **UI Reference Components** | `references/DotField/` | Source Archive | Reference React/TSX components preserved for future Next.js/React migrations. |
 | **Reports & Evaluation** | `reports/` | Local & Artifacts | Evaluation metrics, plots, JSON logs, and `PROJECT_REPORT.docx`. |
 
 ---
 
-## 🚀 1. Backend Deployment (Render.com)
+## 🚀 Render Deployment Instructions
 
-### Step 1: Create Blueprint Service on Render
-1. Log in to [Render.com](https://render.com) (or sign up for free, no credit card needed).
+### Step 1: Connect Repository to Render
+1. Log in to [Render.com](https://render.com) (free tier, no credit card required).
 2. Click **New +** -> **Blueprint**.
 3. Connect your `SentimentScope` GitHub repository.
-4. Render will automatically read [`render.yaml`](file:///c:/MY%20PROJECTS/SentimentScope/render.yaml):
+4. Render will automatically detect [`render.yaml`](render.yaml):
+
 ```yaml
 services:
   - type: web
@@ -59,7 +62,7 @@ services:
     healthCheckPath: /health
     envVars:
       - key: ALLOWED_ORIGINS
-        value: https://sentimentscope.vercel.app,http://localhost:3000
+        value: http://localhost:3000,http://localhost:8000
       - key: MODELS_DIR
         value: models
       - key: REPORTS_DIR
@@ -68,44 +71,35 @@ services:
         value: "true"
       - key: INGESTION_DB_PATH
         value: data/rolling_store.db
+      - key: MAX_SYNC_BATCH_ROWS
+        value: "50000"
+      - key: MAX_BATCH_FILE_BYTES
+        value: "36700160"
 ```
-5. Click **Apply**. Render will automatically build the Docker container and deploy your FastAPI service!
-6. Once deployed, copy your Render web service URL (e.g., `https://sentimentscope-api-nj7l.onrender.com`).
+
+5. Click **Apply**. Render will build the Docker container and deploy the service.
+6. Once deployed, your web application and API are live at your Render URL (e.g., `https://sentimentscope-api-nj7l.onrender.com/`).
 
 ---
 
-## ⚡ 2. Frontend Deployment (Vercel)
-
-### Step 1: Import Project to Vercel
-1. Log in to [Vercel.com](https://vercel.com).
-2. Click **Add New...** -> **Project**.
-3. Import your `SentimentScope` GitHub repository.
-
-### Step 2: Configure Vercel Project Settings
-- **Framework Preset**: `Other`
-- **Root Directory**: `./` (Root directory)
-- **Output Directory**: `public` (Vercel serves `public/index.html` statically)
-- **Serverless API Routes**: *None* (Vercel `vercel.json` contains static single-page rewrites only; all REST calls route directly to Render).
-
-### Step 3: Set Environment Variables
-In Vercel Project Settings -> **Environment Variables**, add:
-| Key | Value |
-| :--- | :--- |
-| `ENV_API_URL` | `https://sentimentscope-api-nj7l.onrender.com` *(your Render web service URL)* |
-
----
-
-## 🧠 3. Model Artifact Management
+## 🧠 Model Artifact Management
 
 - **Baseline Models (`Logistic Regression`, `Multinomial NB`, `LSTM`)**: Pre-trained scikit-learn/Keras model weights are committed directly in Git under `models/` (< 65MB total). They are automatically built into the Docker container image on Render.
-- **Transformer Models (`DistilBERT` / `RoBERTa`)**: `.safetensors` files (> 260MB) are excluded by `.gitignore`. If a Transformer model is selected, `src/api.py` automatically downloads `distilbert-base-uncased` from Hugging Face Hub during server startup.
+- **Transformer Models (`DistilBERT` / `RoBERTa`)**: Large `.safetensors` files (> 260MB) are excluded by `.gitignore`. If a Transformer model is selected, `src/api.py` automatically downloads `distilbert-base-uncased` from Hugging Face Hub during server startup.
 
 ---
 
-## ✅ 4. Verification Checklist
+## ✅ Verification Checklist
 
-### 1. Render API & Model Loading Verification
-Execute `curl` against your Render deployment domain:
+### 1. Web Application Verification
+Open your deployed Render URL in any browser:
+```
+https://sentimentscope-api-nj7l.onrender.com/
+```
+**Expected**: The interactive dark-mode dashboard loads immediately with live particle mesh animation, test analyzer, batch upload, and model telemetry.
+
+### 2. Service Health Check
+Execute `curl` against your Render deployment:
 ```bash
 curl -X GET "https://sentimentscope-api-nj7l.onrender.com/health"
 ```
@@ -119,13 +113,8 @@ curl -X GET "https://sentimentscope-api-nj7l.onrender.com/health"
 }
 ```
 
-Verify interactive API documentation:
+### 3. Interactive API Documentation
 ```
 https://sentimentscope-api-nj7l.onrender.com/docs
 ```
-
-### 2. CORS Verification from Vercel Frontend
-Open your deployed Vercel frontend (`https://your-app.vercel.app`) in your browser:
-1. Navigate to Developer Tools -> **Network** tab.
-2. Trigger a single prediction or test ping.
-3. Verify response header: `Access-Control-Allow-Origin: https://your-app.vercel.app`.
+OpenAPI / Swagger test console for running predictions directly in the browser.
