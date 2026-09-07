@@ -40,9 +40,9 @@ Then open **[http://localhost:8000](http://localhost:8000)** in your browser.
 ## 📂 Directory Structure
 
 ```
-sentiment_scope/
-├── data/
-│   ├── raw/                  # Raw 3-class sentiment CSV dataset
+SentimentScope/
+├── data/                     # Dataset storage
+│   ├── raw/                  # Raw 3-class sentiment CSV dataset (gitignored)
 │   └── processed/            # 70/15/15 train/val/test stratified split CSVs
 ├── models/                   # Saved model binaries, vectorizers & deployment metadata
 │   ├── tfidf_vectorizer.joblib
@@ -51,23 +51,44 @@ sentiment_scope/
 │   ├── logistic_regression.joblib
 │   ├── lstm_model.keras
 │   └── best_model_meta.json  # Metadata for currently deployed model
-├── reports/                  # Detailed comparison reports for all models
+├── notebooks/                # Jupyter exploration & training notebooks
+│   └── SentimentScope_Final.ipynb
+├── public/                   # Interactive Web SPA Frontend (served statically by Vercel)
+│   └── index.html
+├── references/               # Preserved UI reference components & templates
+│   └── DotField/             # React/TSX DotField component from React Bits
+│       ├── DotField.css
+│       ├── DotField.jsx
+│       └── DotField.tsx
+├── reports/                  # Comprehensive evaluation reports, plots & documentation
+│   ├── figures/              # 8 high-resolution analytical evaluation plots
 │   ├── model_comparison.json
-│   └── transformer_comparison.json  # Comprehensive transformer evaluation report
-├── src/
+│   ├── transformer_comparison.json
+│   ├── *.csv                 # Held-out predictions test outputs
+│   └── PROJECT_REPORT.docx   # Academic project report document
+├── src/                      # Python core backend & ML pipeline
 │   ├── __init__.py
+│   ├── api.py                # FastAPI REST API endpoints & WebSocket/SSE streaming
+│   ├── batch_inference.py    # High-throughput streaming batch CLI engine
 │   ├── data_loader.py        # Dataset downloader/loader, missing data cleaner, 70/15/15 splitter
-│   ├── preprocessing.py     # Text cleaning, tokenization, stopword removal, lemmatization (clean_text)
-│   ├── features.py          # TF-IDF & Tokenizer sequence extractors
-│   ├── train.py             # Model training (MNB, LR, Bi-LSTM), evaluation & report generation
-│   ├── transformer_train.py # Fine-tuning DistilBERT & Twitter-RoBERTa models & CPU latency benchmark
-│   └── api.py               # FastAPI REST API endpoints (/predict, /predict/batch, /model/metrics)
-├── tests/
+│   ├── db.py                 # SQLite rolling store for live telemetry
+│   ├── features.py           # TF-IDF & Tokenizer sequence extractors
+│   ├── live_ingestion.py     # Live multi-source simulation ingestion engine
+│   ├── preprocessing.py      # Text cleaning, tokenization, stopword removal, lemmatization
+│   ├── train.py              # Baseline model training (MNB, LR, Bi-LSTM) & evaluation
+│   ├── transformer_train.py  # Fine-tuning DistilBERT & Twitter-RoBERTa models
+│   └── visualize.py          # Publication-grade chart generation
+├── tests/                    # Pytest test suite
 │   ├── __init__.py
 │   ├── test_preprocessing.py # Unit tests for text normalization
-│   └── test_api.py           # Unit tests for API endpoints
-├── requirements.txt          # Dependency specification
-└── README.md                 # Documentation
+│   ├── test_api.py           # Unit tests for API endpoints & batch limits
+│   └── test_live_ingestion.py# Tests for live streaming ingestion & rolling SQLite store
+├── Dockerfile                # Production container specification (Render.com)
+├── docker-compose.yml        # Multi-container orchestration
+├── render.yaml               # Render Blueprint infrastructure definition
+├── vercel.json               # Vercel static Edge CDN deployment configuration
+├── requirements.txt          # Python production dependencies
+└── README.md                 # Project documentation
 ```
 
 ---

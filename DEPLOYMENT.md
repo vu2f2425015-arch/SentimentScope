@@ -31,14 +31,14 @@ This document details the complete step-by-step deployment guide for **Sentiment
 
 ## 📁 Repository Layout & Source of Truth
 
-The repository contains two parallel pairs of directories:
+The repository maintains a clean, decoupled single-source-of-truth structure:
 
-| Component | Production Source of Truth (Active) | Auxiliary / Mirror Copy | Notes & Usage |
+| Component | Canonical Location | Deployment / Serving Target | Description |
 | :--- | :--- | :--- | :--- |
-| **Backend API** | `src/api.py` | `backend/src/api.py` | **`src/api.py`** is copied into the Docker container by `Dockerfile` (lines 31 & 41) and executed on Render (`uvicorn src.api:app`). `backend/src/api.py` is used for isolated local backend runs (`cd backend`) and legacy Vercel serverless imports (`api/index.py`). Both are kept strictly in sync. |
-| **Frontend Web SPA** | `public/index.html` | `frontend/index.html` | **`public/index.html`** is served directly by Vercel via `vercel.json` (`outputDirectory: "public"`) and baked into Render's container as static fallback (`COPY public/ ./public/`). `frontend/index.html` is kept 100% bit-for-bit identical for Vercel configurations that set Root Directory to `frontend`. |
-
-> **Rule for Contributors & Agents**: Any changes to API logic or frontend limits (e.g., batch row limits, timeouts, file size checks) must be applied to both `src/api.py` and `backend/src/api.py`, and to both `public/index.html` and `frontend/index.html`.
+| **Backend API & ML Engine** | `src/api.py` | Render Web Service (`Dockerfile`) | FastAPI REST API containerized with Uvicorn, scikit-learn, PyTorch, and live ingestion. |
+| **Frontend Web SPA** | `public/index.html` | Vercel Static CDN (`vercel.json`) | Single-page reactive dashboard with dynamic charts and live particle telemetry. |
+| **UI Reference Components** | `references/DotField/` | Source Archive | Reference React/TSX components preserved for Next.js/React migrations. |
+| **Reports & Evaluation** | `reports/` | Local & Artifacts | Evaluation metrics, plots, JSON logs, and `PROJECT_REPORT.docx`. |
 
 ---
 
