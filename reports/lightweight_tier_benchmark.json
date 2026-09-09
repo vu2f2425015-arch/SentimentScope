@@ -1,0 +1,410 @@
+{
+  "Word (1,1) + LogisticRegression (C=1.0)": {
+    "val": {
+      "accuracy": 0.6395,
+      "macro_f1": 0.6332,
+      "macro_recall": 0.6473,
+      "macro_precision": 0.6259,
+      "brier_score": 0.4727,
+      "negative_recall": 0.6647,
+      "negative_f1": 0.5874,
+      "neutral_f1": 0.6342,
+      "positive_f1": 0.678,
+      "confusion_matrix": [
+        [
+          1132,
+          409,
+          162
+        ],
+        [
+          796,
+          2462,
+          840
+        ],
+        [
+          223,
+          795,
+          2127
+        ]
+      ]
+    },
+    "test": {
+      "accuracy": 0.6489,
+      "macro_f1": 0.643,
+      "macro_recall": 0.6568,
+      "macro_precision": 0.6354,
+      "brier_score": 0.4616,
+      "negative_recall": 0.6751,
+      "negative_f1": 0.5995,
+      "neutral_f1": 0.6434,
+      "positive_f1": 0.6859,
+      "confusion_matrix": [
+        [
+          1149,
+          399,
+          154
+        ],
+        [
+          769,
+          2503,
+          827
+        ],
+        [
+          213,
+          779,
+          2154
+        ]
+      ]
+    },
+    "oov_test_probs": {
+      "negative": 0.3914,
+      "neutral": 0.3109,
+      "positive": 0.2977
+    },
+    "negation_test_probs": {
+      "negative": 0.2055,
+      "neutral": 0.0783,
+      "positive": 0.7162
+    }
+  },
+  "Word (1,1) + Calibrated LinearSVC": {
+    "val": {
+      "accuracy": 0.6481,
+      "macro_f1": 0.6191,
+      "macro_recall": 0.6028,
+      "macro_precision": 0.6586,
+      "brier_score": 0.4643,
+      "negative_recall": 0.4257,
+      "negative_f1": 0.518,
+      "neutral_f1": 0.6821,
+      "positive_f1": 0.657,
+      "confusion_matrix": [
+        [
+          725,
+          811,
+          167
+        ],
+        [
+          294,
+          3116,
+          688
+        ],
+        [
+          77,
+          1111,
+          1957
+        ]
+      ]
+    },
+    "test": {
+      "accuracy": 0.6604,
+      "macro_f1": 0.6326,
+      "macro_recall": 0.6157,
+      "macro_precision": 0.6728,
+      "brier_score": 0.4553,
+      "negative_recall": 0.4418,
+      "negative_f1": 0.5364,
+      "neutral_f1": 0.694,
+      "positive_f1": 0.6674,
+      "confusion_matrix": [
+        [
+          752,
+          776,
+          174
+        ],
+        [
+          277,
+          3165,
+          657
+        ],
+        [
+          73,
+          1081,
+          1992
+        ]
+      ]
+    },
+    "oov_test_probs": {
+      "negative": 0.2445,
+      "neutral": 0.4273,
+      "positive": 0.3283
+    },
+    "negation_test_probs": {
+      "negative": 0.0888,
+      "neutral": 0.1444,
+      "positive": 0.7668
+    }
+  },
+  "Word (1,2) + LogisticRegression (C=1.0)": {
+    "val": {
+      "accuracy": 0.6381,
+      "macro_f1": 0.6325,
+      "macro_recall": 0.646,
+      "macro_precision": 0.625,
+      "brier_score": 0.4695,
+      "negative_recall": 0.6641,
+      "negative_f1": 0.5908,
+      "neutral_f1": 0.6306,
+      "positive_f1": 0.6761,
+      "confusion_matrix": [
+        [
+          1131,
+          411,
+          161
+        ],
+        [
+          793,
+          2454,
+          851
+        ],
+        [
+          202,
+          820,
+          2123
+        ]
+      ]
+    },
+    "test": {
+      "accuracy": 0.6504,
+      "macro_f1": 0.643,
+      "macro_recall": 0.6566,
+      "macro_precision": 0.6356,
+      "brier_score": 0.4603,
+      "negative_recall": 0.6622,
+      "negative_f1": 0.5921,
+      "neutral_f1": 0.644,
+      "positive_f1": 0.6931,
+      "confusion_matrix": [
+        [
+          1127,
+          400,
+          175
+        ],
+        [
+          776,
+          2488,
+          835
+        ],
+        [
+          202,
+          740,
+          2204
+        ]
+      ]
+    },
+    "oov_test_probs": {
+      "negative": 0.3504,
+      "neutral": 0.308,
+      "positive": 0.3416
+    },
+    "negation_test_probs": {
+      "negative": 0.7935,
+      "neutral": 0.0564,
+      "positive": 0.1501
+    }
+  },
+  "Word (1,2) + Calibrated LinearSVC": {
+    "val": {
+      "accuracy": 0.6457,
+      "macro_f1": 0.619,
+      "macro_recall": 0.6033,
+      "macro_precision": 0.6547,
+      "brier_score": 0.4618,
+      "negative_recall": 0.4363,
+      "negative_f1": 0.524,
+      "neutral_f1": 0.6765,
+      "positive_f1": 0.6565,
+      "confusion_matrix": [
+        [
+          743,
+          791,
+          169
+        ],
+        [
+          321,
+          3066,
+          711
+        ],
+        [
+          69,
+          1109,
+          1967
+        ]
+      ]
+    },
+    "test": {
+      "accuracy": 0.663,
+      "macro_f1": 0.6358,
+      "macro_recall": 0.6199,
+      "macro_precision": 0.6716,
+      "brier_score": 0.4536,
+      "negative_recall": 0.4495,
+      "negative_f1": 0.5384,
+      "neutral_f1": 0.6943,
+      "positive_f1": 0.6749,
+      "confusion_matrix": [
+        [
+          765,
+          768,
+          169
+        ],
+        [
+          296,
+          3142,
+          661
+        ],
+        [
+          79,
+          1042,
+          2025
+        ]
+      ]
+    },
+    "oov_test_probs": {
+      "negative": 0.2043,
+      "neutral": 0.4259,
+      "positive": 0.3698
+    },
+    "negation_test_probs": {
+      "negative": 0.6245,
+      "neutral": 0.1594,
+      "positive": 0.2161
+    }
+  },
+  "Hybrid Word(1,2)+Char(3,5) + LogisticRegression (C=1.0)": {
+    "val": {
+      "accuracy": 0.6464,
+      "macro_f1": 0.6403,
+      "macro_recall": 0.6521,
+      "macro_precision": 0.6331,
+      "brier_score": 0.4628,
+      "negative_recall": 0.6588,
+      "negative_f1": 0.5962,
+      "neutral_f1": 0.639,
+      "positive_f1": 0.6856,
+      "confusion_matrix": [
+        [
+          1122,
+          425,
+          156
+        ],
+        [
+          752,
+          2496,
+          850
+        ],
+        [
+          187,
+          793,
+          2165
+        ]
+      ]
+    },
+    "test": {
+      "accuracy": 0.6592,
+      "macro_f1": 0.6528,
+      "macro_recall": 0.6657,
+      "macro_precision": 0.6454,
+      "brier_score": 0.4499,
+      "negative_recall": 0.6763,
+      "negative_f1": 0.6072,
+      "neutral_f1": 0.6525,
+      "positive_f1": 0.6988,
+      "confusion_matrix": [
+        [
+          1151,
+          412,
+          139
+        ],
+        [
+          739,
+          2545,
+          815
+        ],
+        [
+          199,
+          745,
+          2202
+        ]
+      ]
+    },
+    "oov_test_probs": {
+      "negative": 0.0831,
+      "neutral": 0.1122,
+      "positive": 0.8046
+    },
+    "negation_test_probs": {
+      "negative": 0.7847,
+      "neutral": 0.0738,
+      "positive": 0.1415
+    }
+  },
+  "Hybrid Word(1,2)+Char(3,5) + Calibrated LinearSVC": {
+    "val": {
+      "accuracy": 0.6538,
+      "macro_f1": 0.6252,
+      "macro_recall": 0.6089,
+      "macro_precision": 0.6643,
+      "brier_score": 0.4566,
+      "negative_recall": 0.4316,
+      "negative_f1": 0.5241,
+      "neutral_f1": 0.6861,
+      "positive_f1": 0.6656,
+      "confusion_matrix": [
+        [
+          735,
+          800,
+          168
+        ],
+        [
+          298,
+          3125,
+          675
+        ],
+        [
+          69,
+          1087,
+          1989
+        ]
+      ]
+    },
+    "test": {
+      "accuracy": 0.6683,
+      "macro_f1": 0.6412,
+      "macro_recall": 0.6244,
+      "macro_precision": 0.6796,
+      "brier_score": 0.4482,
+      "negative_recall": 0.4501,
+      "negative_f1": 0.5433,
+      "neutral_f1": 0.6976,
+      "positive_f1": 0.6827,
+      "confusion_matrix": [
+        [
+          766,
+          780,
+          156
+        ],
+        [
+          283,
+          3164,
+          652
+        ],
+        [
+          69,
+          1028,
+          2049
+        ]
+      ]
+    },
+    "oov_test_probs": {
+      "negative": 0.0467,
+      "neutral": 0.2167,
+      "positive": 0.7366
+    },
+    "negation_test_probs": {
+      "negative": 0.5665,
+      "neutral": 0.2297,
+      "positive": 0.2038
+    }
+  }
+}

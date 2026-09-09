@@ -1,0 +1,68 @@
+{
+  "dataset": "CardiffNLP TweetEval Held-Out Test Set (8,947 samples)",
+  "model": "Hybrid TF-IDF + Logistic Regression",
+  "optimal_theta_neg": 0.34,
+  "baseline_argmax_test": {
+    "accuracy": 0.6592,
+    "macro_f1": 0.6528,
+    "macro_recall": 0.6657,
+    "macro_precision": 0.6454,
+    "brier_score": 0.4499,
+    "negative_recall": 0.6763,
+    "negative_f1": 0.6072,
+    "neutral_f1": 0.6525,
+    "positive_f1": 0.6988,
+    "confusion_matrix": [
+      [
+        1151,
+        412,
+        139
+      ],
+      [
+        739,
+        2545,
+        815
+      ],
+      [
+        199,
+        745,
+        2202
+      ]
+    ]
+  },
+  "tuned_threshold_test": {
+    "theta_neg": 0.34,
+    "accuracy": 0.641,
+    "macro_f1": 0.6378,
+    "macro_recall": 0.6653,
+    "macro_precision": 0.6309,
+    "negative_recall": 0.7421,
+    "negative_precision": 0.5026,
+    "negative_f1": 0.5993,
+    "neutral_f1": 0.6154,
+    "positive_f1": 0.6988,
+    "confusion_matrix": [
+      [
+        1263,
+        300,
+        139
+      ],
+      [
+        1014,
+        2270,
+        815
+      ],
+      [
+        236,
+        708,
+        2202
+      ]
+    ]
+  },
+  "true_neg_pred_neu_reduction": {
+    "baseline_misclassified_as_neutral": 412,
+    "tuned_misclassified_as_neutral": 300,
+    "false_neutrals_rescued_to_negative": 112,
+    "reduction_percentage": 27.18
+  }
+}

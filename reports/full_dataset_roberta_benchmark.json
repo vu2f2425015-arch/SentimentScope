@@ -1,0 +1,54 @@
+{
+  "model_name": "cardiffnlp/twitter-roberta-base-sentiment-latest",
+  "dataset": "CardiffNLP TweetEval 3-Class Held-Out Test Set (Full 60k Split)",
+  "test_samples": 8947,
+  "accuracy": 0.7622,
+  "macro_f1": 0.761,
+  "macro_recall": 0.7727,
+  "macro_precision": 0.7531,
+  "brier_score": 0.3272,
+  "latency_ms": {
+    "p50_ms": 22.29,
+    "p95_ms": 41.3,
+    "mean_ms": 40.25
+  },
+  "memory_profile_mb": {
+    "base_python_ram": 596.72,
+    "ram_after_model_load": 624.44,
+    "peak_inference_ram": 1385.04
+  },
+  "confusion_matrix": [
+    [
+      1375,
+      293,
+      34
+    ],
+    [
+      579,
+      2978,
+      542
+    ],
+    [
+      55,
+      625,
+      2466
+    ]
+  ],
+  "class_metrics": {
+    "negative": {
+      "precision": 0.6844,
+      "recall": 0.8079,
+      "f1": 0.741
+    },
+    "neutral": {
+      "precision": 0.7644,
+      "recall": 0.7265,
+      "f1": 0.745
+    },
+    "positive": {
+      "precision": 0.8107,
+      "recall": 0.7839,
+      "f1": 0.797
+    }
+  }
+}

@@ -86,6 +86,12 @@ def clean_text(text: str) -> str:
     # 1. Lowercase
     text = text.lower()
     
+    # Expand negation contractions to preserve polarity before punctuation stripping
+    text = re.sub(r"\bcan['’]?t\b", "cannot", text)
+    text = re.sub(r"\bwon['’]?t\b", "will not", text)
+    text = re.sub(r"\bshan['’]?t\b", "shall not", text)
+    text = re.sub(r"\bn['’]t\b", " not", text)
+    
     # 2. Strip HTML tags
     text = re.sub(r'<[^>]+>', ' ', text)
     

@@ -39,6 +39,48 @@ class TFIDFExtractor:
         return instance
 
 
+class HybridTFIDFExtractor:
+    """
+    Combines word n-grams (1, 2) and character boundary n-grams (char_wb, 3, 5).
+    Guarantees that brand names, typos, and out-of-vocabulary tokens retain subword signal.
+    """
+    def __init__(self, word_max_features: int = 15000, char_max_features: int = 10000):
+        from sklearn.pipeline import FeatureUnion
+        self.word_max_features = word_max_features
+        self.char_max_features = char_max_features
+        self.vectorizer = FeatureUnion([
+            ("word", TfidfVectorizer(
+                max_features=self.word_max_features,
+                ngram_range=(1, 2),
+                sublinear_tf=True
+            )),
+            ("char_wb", TfidfVectorizer(
+                analyzer="char_wb",
+                max_features=self.char_max_features,
+                ngram_range=(3, 5),
+                sublinear_tf=True
+            ))
+        ])
+
+    def fit_transform(self, texts: list):
+        return self.vectorizer.fit_transform(texts)
+
+    def transform(self, texts: list):
+        return self.vectorizer.transform(texts)
+
+    def save(self, filepath: str = os.path.join(MODELS_DIR, "tfidf_vectorizer.joblib")):
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        joblib.dump(self.vectorizer, filepath)
+        print(f"[Features] Saved Hybrid TF-IDF vectorizer to '{filepath}'.")
+
+    @classmethod
+    def load(cls, filepath: str = os.path.join(MODELS_DIR, "tfidf_vectorizer.joblib")):
+        instance = cls()
+        instance.vectorizer = joblib.load(filepath)
+        print(f"[Features] Loaded Hybrid TF-IDF vectorizer from '{filepath}'.")
+        return instance
+
+
 class SequentialExtractor:
     """
     Keras Tokenizer and padded sequence extractor for LSTM / Bi-LSTM path.

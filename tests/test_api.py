@@ -158,3 +158,35 @@ def test_transformer_inference_not_rule_based():
             assert "probabilities" in data
             assert abs(sum(data["probabilities"].values()) - 1.0) < 0.01
 
+
+def test_lightweight_tier_hybrid_features_and_negation():
+    """
+    Verifies that the lightweight tier correctly utilizes Hybrid TF-IDF
+    features and yields positive classification for brand-name OOV inputs
+    and negative classification for negation sentences.
+    """
+    import os
+    from unittest.mock import patch
+
+    with patch.dict(os.environ, {"ACTIVE_MODEL_TIER": "lightweight"}):
+        from src.api import model_state, load_model_state
+        model_state.clear()
+        load_model_state()
+
+        with TestClient(app) as client:
+            # 1. Test OOV brand name input
+            resp_oov = client.post("/predict", json={"text": "SentimentScope is working amazingly well!"})
+            assert resp_oov.status_code == 200
+            data_oov = resp_oov.json()
+            assert data_oov["sentiment"] == "positive"
+            assert data_oov["probabilities"]["positive"] > 0.50
+            assert "Hybrid TF-IDF" in data_oov["tokenizer_type"]
+
+            # 2. Test negation sentence
+            resp_neg = client.post("/predict", json={"text": "The service was not good at all."})
+            assert resp_neg.status_code == 200
+            data_neg = resp_neg.json()
+            assert data_neg["sentiment"] == "negative"
+            assert data_neg["probabilities"]["negative"] > 0.50
+
+

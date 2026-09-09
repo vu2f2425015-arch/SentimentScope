@@ -1,69 +1,73 @@
 {
-  "best_model_name": "DistilBERT (Full Dataset)",
+  "best_model_name": "Twitter-RoBERTa (Domain-Adapted Transformer)",
   "details": {
     "type": "transformer",
-    "artifact": "distilbert_transformer",
-    "tokenizer": "distilbert_transformer"
+    "artifact": "cardiffnlp/twitter-roberta-base-sentiment-latest",
+    "tokenizer": "cardiffnlp/twitter-roberta-base-sentiment-latest"
   },
   "metrics": {
-    "accuracy": 0.7257,
-    "precision_macro": 0.7159,
-    "recall_macro": 0.7305,
-    "macro_f1": 0.7221,
-    "brier_score": 0.3746,
+    "accuracy": 0.7622,
+    "precision_macro": 0.7531,
+    "recall_macro": 0.7727,
+    "macro_f1": 0.761,
+    "brier_score": 0.3272,
     "confusion_matrix": [
       [
-        1264,
-        362,
-        77
+        1375,
+        293,
+        34
       ],
       [
-        567,
-        2881,
-        650
+        579,
+        2978,
+        542
       ],
       [
-        109,
-        689,
-        2347
+        55,
+        625,
+        2466
       ]
     ],
     "class_metrics": {
       "negative": {
-        "precision": 0.6515,
-        "recall": 0.7422,
-        "f1": 0.6939
+        "precision": 0.6844,
+        "recall": 0.8079,
+        "f1": 0.741
       },
       "neutral": {
-        "precision": 0.7327,
-        "recall": 0.703,
-        "f1": 0.7176
+        "precision": 0.7644,
+        "recall": 0.7265,
+        "f1": 0.745
       },
       "positive": {
-        "precision": 0.7635,
-        "recall": 0.7463,
-        "f1": 0.7548
+        "precision": 0.8107,
+        "recall": 0.7839,
+        "f1": 0.797
       }
     }
   },
   "deployment_tiers": {
     "high_accuracy_tier": {
-      "model_name": "DistilBERT (Full Dataset)",
+      "model_name": "Twitter-RoBERTa (Domain-Adapted Transformer)",
       "type": "transformer",
-      "artifact": "distilbert_transformer",
-      "tokenizer": "distilbert_transformer",
-      "accuracy": 0.7257,
-      "macro_f1": 0.7221,
-      "latency_api_ms": "32-38 ms",
-      "target_environment": "Local / GPU / Dedicated Compute (>=1GB RAM)"
+      "artifact": "cardiffnlp/twitter-roberta-base-sentiment-latest",
+      "tokenizer": "cardiffnlp/twitter-roberta-base-sentiment-latest",
+      "accuracy": 0.7622,
+      "macro_f1": 0.761,
+      "negative_recall": 0.8079,
+      "latency_api_ms": "22-38 ms",
+      "target_environment": "Local / Dedicated Compute (>=1GB RAM)"
     },
     "lightweight_cloud_tier": {
-      "model_name": "Logistic Regression (Lightweight Cloud Tier)",
+      "model_name": "Hybrid TF-IDF + Logistic Regression (Lightweight Cloud Tier)",
       "type": "sklearn",
       "artifact": "logistic_regression.joblib",
       "vectorizer": "tfidf_vectorizer.joblib",
-      "accuracy": 0.6667,
-      "macro_f1": 0.6451,
+      "features": "Word N-grams (1,2) + Character Subwords (3,5) with Negation Contraction Expansion",
+      "accuracy": 0.6592,
+      "macro_f1": 0.6528,
+      "negative_recall": 0.6763,
+      "negative_recall_tuned": 0.7421,
       "latency_api_local_ms": "1.5-3.5 ms",
       "latency_render_cloud_ms": "150-250 ms",
       "target_environment": "Render Free Tier / Edge / Serverless (512MB RAM)"

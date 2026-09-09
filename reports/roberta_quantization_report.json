@@ -1,0 +1,59 @@
+{
+  "model_name": "cardiffnlp/twitter-roberta-base-sentiment-latest",
+  "quantization_type": "Dynamic INT8 (PyTorch torch.quantization.quantize_dynamic on Linear layers)",
+  "disk_footprint": {
+    "unquantized_weights_mb": 475.57,
+    "quantized_weights_mb": 230.93,
+    "reduction_percentage": 51.44
+  },
+  "latency_benchmark_ms": {
+    "unquantized": {
+      "p50_ms": 23.67,
+      "p95_ms": 26.69,
+      "mean_ms": 24.17
+    },
+    "quantized_int8": {
+      "p50_ms": 18.46,
+      "p95_ms": 20.79,
+      "mean_ms": 18.93
+    }
+  },
+  "memory_profile_mb": {
+    "base_python_ram": 597.32,
+    "unquantized_loaded_ram": 622.09,
+    "post_quantization_ram": 1691.2,
+    "peak_inference_ram": 1930.04
+  },
+  "quantized_metrics_full_test_set": {
+    "test_samples": 8947,
+    "accuracy": 0.7178,
+    "macro_f1": 0.6803,
+    "macro_recall": 0.6523,
+    "macro_precision": 0.7848,
+    "brier_score": 0.3857,
+    "negative_recall": 0.416,
+    "negative_f1": 0.5568,
+    "confusion_matrix": [
+      [
+        708,
+        969,
+        25
+      ],
+      [
+        112,
+        3724,
+        263
+      ],
+      [
+        21,
+        1135,
+        1990
+      ]
+    ]
+  },
+  "render_512mb_feasibility": {
+    "safe_in_512mb_free_tier": false,
+    "measured_peak_ram_mb": 1930.04,
+    "verdict": "Feasible for local/dedicated instances (>=1GB RAM), but remains high-risk on 512MB Render free tier due to OS and multi-request RAM bursts."
+  }
+}

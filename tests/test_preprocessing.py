@@ -38,3 +38,11 @@ def test_clean_text_empty_input():
 def test_clean_text_punctuation_only():
     raw_text = "!@#$%^&*()_+-=[]{}|;:'\",.<>/?"
     assert clean_text(raw_text) == ""
+
+
+def test_clean_text_negation_contractions():
+    raw_text = "I don't like this, it isn't working and I can't recommend it."
+    cleaned = clean_text(raw_text)
+    assert "not" in cleaned or "cannot" in cleaned
+    assert "like" in cleaned or "work" in cleaned
+

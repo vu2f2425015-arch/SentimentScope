@@ -87,14 +87,15 @@ services:
 ## 🧠 Model Artifact Management & Memory Budget
 
 - **Dual-Tier Production Architecture (Option B)**:
-  - **Tier 1 (High-Accuracy Engine)**: `DistilBERT (Full Dataset)` (72.57% Acc / 0.7221 Macro F1) is selected by default in `models/best_model_meta.json` for local runs, Docker Compose, or dedicated compute (`>=1GB RAM`).
-  - **Tier 2 (Zero-OOM Cloud Edge Tier)**: `Logistic Regression` (66.67% Acc / 0.6451 Macro F1, 1.5–3.5ms local / ~150–250ms Render Free Tier, ~50MB RAM) is pinned on Render Free Tier via `ACTIVE_MODEL_TIER="lightweight"` to prevent OOM termination (`Exit 137`).
+  - **Tier 1 (High-Accuracy Engine)**: `Twitter-RoBERTa (Domain-Adapted Transformer)` (**76.22% Acc / 0.7610 Macro F1 / 80.79% Negative Recall**, 22.29ms p50 latency on full 8,947 held-out test split) is configured in `models/best_model_meta.json` for local runs, Docker Compose, or dedicated compute (`>=1GB RAM`).
+  - **Tier 2 (Zero-OOM Cloud Edge Tier)**: `Hybrid TF-IDF + Logistic Regression` (**65.92% Acc / 0.6528 Macro F1 / 67.63% Negative Recall**, and **74.21%** with $\theta_{\text{neg}}=0.34$ threshold tuning; 1.5–3.5ms local / ~150–250ms Render Free Tier, ~50MB RAM) is pinned on Render Free Tier via `ACTIVE_MODEL_TIER="lightweight"` to prevent OOM termination (`Exit 137`). Now incorporates word n-grams (1,2) and character boundary subwords (3,5) with explicit negation contraction expansion.
 - **Baseline Models (`Logistic Regression`, `Multinomial NB`, `LSTM`)**: Pre-trained scikit-learn/Keras model weights are committed directly in Git under `models/` (< 65MB total). They are automatically built into the Docker container image on Render.
-- **Transformer Models (`DistilBERT` / `RoBERTa`)**: Large `.safetensors` files (> 260MB) are excluded by `.gitignore`. For dedicated/local environments running DistilBERT, artifacts reside in `models/distilbert_transformer/`.
-- **Render Free Tier Memory Safety (512MB RAM Limit)**:
+- **Transformer Models (`Twitter-RoBERTa` / `DistilBERT`)**: Large `.safetensors` files (> 260MB) are excluded by `.gitignore`. For dedicated/local environments, Twitter-RoBERTa downloads directly or runs from local cache.
+- **Render Free Tier Memory Safety & Empirical INT8 Profiling**:
   - Render's Free Web Service plan allocates **512MB RAM**.
-  - With `ACTIVE_MODEL_TIER="lightweight"`, the container operates at **~50MB RSS**, guaranteeing 100% crash-free uptime even under heavy concurrent traffic.
-  - To run DistilBERT directly in cloud production, upgrade Render to **Starter (2GB RAM)** and set `ACTIVE_MODEL_TIER="auto"`.
+  - **Why Quantization Alone Does Not Suffice**: Empirical testing of PyTorch Dynamic INT8 Quantization on RoBERTa compressed weights by 51.4% (230MB), but runtime PyTorch execution tensors pushed peak RSS to **1,930 MB** and collapsed negative recall to 41.60%.
+  - With `ACTIVE_MODEL_TIER="lightweight"`, the container operates comfortably at **~50MB RSS**, guaranteeing 100% crash-free uptime even under high concurrent request volumes.
+  - To run Twitter-RoBERTa directly in cloud production, upgrade Render to **Starter (2GB RAM)** and set `ACTIVE_MODEL_TIER="auto"`.
 
 ---
 

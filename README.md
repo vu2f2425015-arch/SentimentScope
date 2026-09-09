@@ -10,12 +10,12 @@ SentimentScope uses a configuration-driven, dual-tier production topology dynami
 
 | Deployment Tier | Active Model Architecture | Test Accuracy | Macro F1 | Negative Recall | Measured API Latency | Target Runtime Environment |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Tier 1: High-Accuracy Engine** *(Primary)* | **DistilBERT (Full Dataset)**<br>`distilbert-base-uncased` (66M params) | **72.57%** | **0.7221** | **74.22%** | **32–38 ms** *(local API)*<br>*(14.01ms raw tensor)* | Local, Docker Compose, Dedicated GPU/CPU (`>=1GB RAM`) |
-| **Tier 2: Zero-OOM Edge Tier** *(Cloud Free)* | **Logistic Regression**<br>TF-IDF + Calibrated Classifier | **66.67%** | **0.6451** | **49.88%** | **1.5–3.5 ms** *(local API)*<br>*(0.42ms raw; ~150–250ms Render Free Tier)* | Render Free Tier / Serverless (`512MB RAM limit`) |
+| **Tier 1: High-Accuracy Engine** *(Primary)* | **Twitter-RoBERTa Base 🏆**<br>`cardiffnlp/twitter-roberta-base-sentiment-latest` (125M params) | **76.22%** | **0.7610** | **80.79%** | **22–38 ms** *(local API)*<br>*(22.29ms raw tensor)* | Local, Docker Compose, Dedicated GPU/CPU (`>=1GB RAM`) |
+| **Tier 2: Zero-OOM Edge Tier** *(Cloud Free)* | **Modernized Hybrid TF-IDF + LR ⚡**<br>Word (1,2) + Char Subwords (3,5) with Contraction Expansion | **65.92%** | **0.6528** | **67.63%**<br>*(74.21% tuned)* | **1.5–3.5 ms** *(local API)*<br>*(0.55ms raw; ~150–250ms Render Free Tier)* | Render Free Tier / Serverless (`512MB RAM limit`, ~50MB RSS) |
 
 > [!NOTE]
 > **Dynamic Configuration Contract**:
-> The API determines its loaded model dynamically from [`models/best_model_meta.json`](models/best_model_meta.json) or the `ACTIVE_MODEL_TIER` environment variable. On Render's 512MB free tier, `ACTIVE_MODEL_TIER=lightweight` is automatically enabled via [`render.yaml`](render.yaml) to guarantee zero-OOM uptime (50MB RAM footprint), while local and dedicated deployments run the high-accuracy DistilBERT model.
+> The API determines its loaded model dynamically from [`models/best_model_meta.json`](models/best_model_meta.json) or the `ACTIVE_MODEL_TIER` environment variable. On Render's 512MB free tier, `ACTIVE_MODEL_TIER=lightweight` is automatically enabled via [`render.yaml`](render.yaml) to guarantee zero-OOM uptime (50MB RAM footprint), while local and dedicated deployments run the high-accuracy Twitter-RoBERTa model.
 >
 > All endpoints (`/health`, `/model/metrics`, `/predict`) report their active model telemetry dynamically at runtime.
 
