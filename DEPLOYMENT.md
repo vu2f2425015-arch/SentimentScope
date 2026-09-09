@@ -88,7 +88,7 @@ services:
 
 - **Dual-Tier Production Architecture (Option B)**:
   - **Tier 1 (High-Accuracy Engine)**: `DistilBERT (Full Dataset)` (72.57% Acc / 0.7221 Macro F1) is selected by default in `models/best_model_meta.json` for local runs, Docker Compose, or dedicated compute (`>=1GB RAM`).
-  - **Tier 2 (Zero-OOM Cloud Edge Tier)**: `Logistic Regression` (66.67% Acc / 0.6451 Macro F1, <1ms latency, ~50MB RAM) is pinned on Render Free Tier via `ACTIVE_MODEL_TIER="lightweight"` to prevent OOM termination (`Exit 137`).
+  - **Tier 2 (Zero-OOM Cloud Edge Tier)**: `Logistic Regression` (66.67% Acc / 0.6451 Macro F1, 1.5–3.5ms local / ~150–250ms Render Free Tier, ~50MB RAM) is pinned on Render Free Tier via `ACTIVE_MODEL_TIER="lightweight"` to prevent OOM termination (`Exit 137`).
 - **Baseline Models (`Logistic Regression`, `Multinomial NB`, `LSTM`)**: Pre-trained scikit-learn/Keras model weights are committed directly in Git under `models/` (< 65MB total). They are automatically built into the Docker container image on Render.
 - **Transformer Models (`DistilBERT` / `RoBERTa`)**: Large `.safetensors` files (> 260MB) are excluded by `.gitignore`. For dedicated/local environments running DistilBERT, artifacts reside in `models/distilbert_transformer/`.
 - **Render Free Tier Memory Safety (512MB RAM Limit)**:

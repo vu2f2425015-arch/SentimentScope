@@ -64,7 +64,8 @@
       "vectorizer": "tfidf_vectorizer.joblib",
       "accuracy": 0.6667,
       "macro_f1": 0.6451,
-      "latency_api_ms": "<1 ms",
+      "latency_api_local_ms": "1.5-3.5 ms",
+      "latency_render_cloud_ms": "150-250 ms",
       "target_environment": "Render Free Tier / Edge / Serverless (512MB RAM)"
     }
   }

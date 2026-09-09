@@ -10,8 +10,8 @@ SentimentScope uses a configuration-driven, dual-tier production topology dynami
 
 | Deployment Tier | Active Model Architecture | Test Accuracy | Macro F1 | Negative Recall | Measured API Latency | Target Runtime Environment |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Tier 1: High-Accuracy Engine** *(Primary)* | **DistilBERT (Full Dataset)**<br>`distilbert-base-uncased` (66M params) | **72.57%** | **0.7221** | **74.22%** | **32–38 ms** *(live API)*<br>*(14.01ms raw tensor)* | Local, Docker Compose, Dedicated GPU/CPU (`>=1GB RAM`) |
-| **Tier 2: Zero-OOM Edge Tier** *(Cloud Free)* | **Logistic Regression**<br>TF-IDF + Calibrated Classifier | **66.67%** | **0.6451** | **49.88%** | **< 1.0 ms** | Render Free Tier / Serverless (`512MB RAM limit`) |
+| **Tier 1: High-Accuracy Engine** *(Primary)* | **DistilBERT (Full Dataset)**<br>`distilbert-base-uncased` (66M params) | **72.57%** | **0.7221** | **74.22%** | **32–38 ms** *(local API)*<br>*(14.01ms raw tensor)* | Local, Docker Compose, Dedicated GPU/CPU (`>=1GB RAM`) |
+| **Tier 2: Zero-OOM Edge Tier** *(Cloud Free)* | **Logistic Regression**<br>TF-IDF + Calibrated Classifier | **66.67%** | **0.6451** | **49.88%** | **1.5–3.5 ms** *(local API)*<br>*(0.42ms raw; ~150–250ms Render Free Tier)* | Render Free Tier / Serverless (`512MB RAM limit`) |
 
 > [!NOTE]
 > **Dynamic Configuration Contract**:
@@ -228,9 +228,12 @@ python -m src.transformer_train
   - Positive Sample: `38.15 ms`
   - Negative Sample: `36.34 ms`
   - Neutral Sample: `32.66 ms`
-  - *Average End-to-End Single-Sample Latency*: **36.81 ms** (includes text preprocessing, WordPiece tokenization, PyTorch forward pass, softmax conversion, and Pydantic serialization).
-- **Lightweight Cloud Tier (Logistic Regression on Render Free Tier)**: `< 0.50 ms` CPU inference latency.
-- **1-Second SLA Status**: **PASS** (< 40ms total response time, **25x faster** than the 1,000ms SLA constraint).
+- **Lightweight Cloud Tier (Logistic Regression on Render Free Tier)**:
+  - **Raw Scikit-Learn Inference (CPU)**: `0.42 ms` (TF-IDF vectorizer + `predict_proba`).
+  - **Local FastAPI Request Lifecycle**: `1.5–3.5 ms` (text preprocessing, feature extraction, inference, Pydantic JSON serialization).
+  - **Measured Live Render Container (Cloud Edge)**: `~150–250 ms` internal server execution (`latency_ms`), with `~800–1,000 ms` end-to-end public internet HTTPS roundtrip from client to Oregon data center.
+  - *Context on Cloud Latency*: Render's free tier runs on shared, burstable vCPU cores with occasional CPU throttling and container cold pauses, introducing process scheduling overhead compared to bare-metal execution. However, this lightweight footprint (~50MB RAM) completely eliminates OOM risk (`Exit 137`).
+- **1-Second SLA Status**: **PASS** across all tiers (< 40ms local DistilBERT, < 250ms Render Free Tier server time, comfortably below the 1,000ms SLA constraint).
 
 ---
 

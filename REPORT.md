@@ -170,7 +170,45 @@ Uncalibrated classifier probabilities often overestimate confidence. We evaluate
 
 ---
 
-## 9. Conclusion
+## 9. Limitations, Production Trade-Offs & Future Improvements
+
+### 9.1 Confidence Calibration vs. Memory Footprint Trade-Off
+A critical production architectural insight emerged during live cloud deployment: **the lightweight tier deliberately trades confidence calibration, probability sharpness, and OOV (out-of-vocabulary) resilience for strict memory safety**.
+
+#### Concrete Live Production Case Study:
+During live validation of the Render edge tier against a strongly positive sample:
+> `"SentimentScope is working amazingly well!"`
+
+The two deployment tiers exhibited starkly contrasting behaviors:
+- **Lightweight Tier (Logistic Regression + TF-IDF)**:
+  - Cleaned text: `"sentimentscope working amazingly well"`
+  - Predicted sentiment: `positive`
+  - Output probabilities: `{'positive': 0.3770, 'neutral': 0.3721, 'negative': 0.2509}`
+  - **Confidence**: **37.70%** (barely **0.49% ahead of neutral** at 37.21%).
+  - *Root Cause*: TF-IDF relies on a fixed, vocabulary-bound bag-of-words representation. Out-of-vocabulary terms like the brand name `"sentimentscope"` are dropped entirely as unknown tokens. Without subword decomposition or self-attention contextualization, the model relies solely on isolated unigrams (`"working"` and `"well"`), diluting positive polarity and producing a flat, under-confident probability distribution near the decision boundary.
+- **High-Accuracy Engine (DistilBERT)**:
+  - Subword WordPiece tokenization breaks the compound token into `['sentiment', '##scope', 'is', 'working', 'amazingly', 'well', '!']`.
+  - Multi-head self-attention links intensifiers (`"amazingly"`) directly to sentiment descriptors (`"well"`), capturing contextual compositionality.
+  - **Confidence**: **94.81%** positive, with negligible neutral (3.46%) and negative (1.73%) mass.
+
+#### Strategic Architectural Justification:
+While DistilBERT delivers vastly superior calibration and semantic resolution, loading its 267MB weights alongside PyTorch in Render's 512MB free tier places peak runtime memory dangerously close to the platform limit (350–480MB RSS). The dual-tier architecture purposefully accepts lower confidence margins in the lightweight tier to guarantee 100% crash-free uptime (zero OOM `Exit 137` events) on resource-constrained cloud infrastructure.
+
+### 9.2 Latency Discrepancy: Algorithmic Compute vs. Cloud Virtualization
+A second operational limitation is the disparity between algorithmic CPU execution and live cloud API latency:
+- **Raw Algorithmic Compute**: Scikit-learn inference runs in **0.42 ms**; PyTorch tensor forward-pass runs in **14.01 ms**.
+- **Local FastAPI Lifecycle**: Including request parsing, tokenization, model inference, and Pydantic serialization, local response time is **1.5–3.5 ms** for Logistic Regression and **32–38 ms** for DistilBERT.
+- **Render Free Tier Cloud Server**: Due to shared, throttled virtual CPUs (`vCPU`) and container cold execution pauses on Render's free tier, internal server latency ranges from **150–250 ms**, with total public internet HTTPS roundtrips between **800–1,000 ms**.
+- Both tiers comfortably satisfy the strict **1-Second SLA**, but reporting only the theoretical `< 0.50 ms` figure without documenting cloud virtualization overhead obscures real production behavior.
+
+### 9.3 Future Improvements
+1. **Subword Classical Embeddings**: Integrate FastText or Byte-Pair Encoding into the lightweight pipeline to handle OOV brand names without requiring heavy transformer backbones.
+2. **Dedicated Cloud Compute**: Deploy DistilBERT directly on an upgraded cloud instance (Render Starter 2GB or AWS ECS Fargate) to serve the high-accuracy engine in cloud production.
+3. **Static INT8 ONNX Quantization**: Convert DistilBERT to an ONNX runtime engine to achieve ~70MB disk size and lower peak execution memory, bridging the gap between accuracy and memory limits.
+
+---
+
+## 10. Conclusion
 
 SentimentScope meets and exceeds all project requirements:
 - **Code Quality**: Modular architecture, clear separation of concerns, 100% path safety, and unit test coverage.
