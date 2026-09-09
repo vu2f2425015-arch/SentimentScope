@@ -17,6 +17,12 @@ from pydantic import BaseModel, Field
 from src.preprocessing import clean_text, minimal_clean_text
 from src.features import TFIDFExtractor, SequentialExtractor
 import asyncio
+
+try:
+    import torch
+except ImportError:
+    torch = None
+
 from src.data_loader import REVERSE_LABEL_MAP
 from src.db import init_db, insert_batch_predictions, get_recent_predictions, get_rolling_stats
 from src.live_ingestion import (
@@ -58,6 +64,24 @@ def load_model_state():
         return
 
     try:
+        active_tier = os.getenv("ACTIVE_MODEL_TIER", "auto").lower()
+        if active_tier == "lightweight":
+            lr_path = os.path.join(MODELS_DIR, "logistic_regression.joblib")
+            vec_path = os.path.join(MODELS_DIR, "tfidf_vectorizer.joblib")
+            if os.path.exists(lr_path) and os.path.exists(vec_path):
+                model_state["type"] = "sklearn"
+                model_state["model"] = joblib.load(lr_path)
+                model_state["vectorizer"] = joblib.load(vec_path)
+                model_state["name"] = "Logistic Regression (Lightweight Cloud Tier)"
+                model_state["metrics"] = {
+                    "accuracy": 0.6667,
+                    "precision_macro": 0.6661,
+                    "recall_macro": 0.6331,
+                    "macro_f1": 0.6451
+                }
+                print("[API] Loaded active lightweight cloud tier: 'Logistic Regression' (sklearn).")
+                return
+
         with open(meta_path, "r") as f:
             meta = json.load(f)
             
@@ -82,21 +106,56 @@ def load_model_state():
             model_state["model"] = model
             model_state["tokenizer"] = seq_extractor
         elif model_type == "transformer":
-            import torch
-            from transformers import AutoTokenizer, AutoModelForSequenceClassification
-            tokenizer_path = os.path.join(MODELS_DIR, details["tokenizer"])
-            if not os.path.exists(artifact_path):
-                print(f"[API Warning] Transformer artifact directory '{artifact_path}' not found. Falling back to default pretrained checkpoint.")
-                artifact_path = "distilbert-base-uncased"
-                tokenizer_path = "distilbert-base-uncased"
-            
-            tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-            model = AutoModelForSequenceClassification.from_pretrained(artifact_path, num_labels=3)
-            model.eval()
-            model_state["type"] = "transformer"
-            model_state["model"] = model
-            model_state["tokenizer"] = tokenizer
-            model_state["max_len"] = 64  # Matches training max_len = 64 exactly
+            if torch is None:
+                print(f"[API Warning] PyTorch is not installed. Falling back to lightweight Logistic Regression.")
+                lr_path = os.path.join(MODELS_DIR, "logistic_regression.joblib")
+                vec_path = os.path.join(MODELS_DIR, "tfidf_vectorizer.joblib")
+                if os.path.exists(lr_path) and os.path.exists(vec_path):
+                    model_state["type"] = "sklearn"
+                    model_state["model"] = joblib.load(lr_path)
+                    model_state["vectorizer"] = joblib.load(vec_path)
+                    model_state["name"] = "Logistic Regression (Lightweight Cloud Tier)"
+                    model_state["metrics"] = {"accuracy": 0.6667, "macro_f1": 0.6451}
+                    return
+                return
+            try:
+                from transformers import AutoTokenizer, AutoModelForSequenceClassification
+                tokenizer_path = os.path.join(MODELS_DIR, details["tokenizer"])
+                if not os.path.exists(artifact_path):
+                    print(f"[API Info] Transformer artifact directory '{artifact_path}' not found on disk (e.g. Render Free Tier 512MB RAM constraint). Safely loading pre-packaged Logistic Regression.")
+                    lr_path = os.path.join(MODELS_DIR, "logistic_regression.joblib")
+                    vec_path = os.path.join(MODELS_DIR, "tfidf_vectorizer.joblib")
+                    if os.path.exists(lr_path) and os.path.exists(vec_path):
+                        model_state["type"] = "sklearn"
+                        model_state["model"] = joblib.load(lr_path)
+                        model_state["vectorizer"] = joblib.load(vec_path)
+                        model_state["name"] = "Logistic Regression (Lightweight Cloud Tier)"
+                        model_state["metrics"] = {"accuracy": 0.6667, "macro_f1": 0.6451}
+                        return
+                    else:
+                        print(f"[API Warning] Falling back to default pretrained checkpoint.")
+                        artifact_path = "distilbert-base-uncased"
+                        tokenizer_path = "distilbert-base-uncased"
+                
+                tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+                model = AutoModelForSequenceClassification.from_pretrained(artifact_path, num_labels=3)
+                model.eval()
+                model_state["type"] = "transformer"
+                model_state["model"] = model
+                model_state["tokenizer"] = tokenizer
+                model_state["max_len"] = 64  # Matches training max_len = 64 exactly
+            except Exception as t_err:
+                print(f"[API Error] Failed to load transformer model '{best_name}': {t_err}")
+                lr_path = os.path.join(MODELS_DIR, "logistic_regression.joblib")
+                vec_path = os.path.join(MODELS_DIR, "tfidf_vectorizer.joblib")
+                if os.path.exists(lr_path) and os.path.exists(vec_path):
+                    print("[API Info] Gracefully falling back to Logistic Regression.")
+                    model_state["type"] = "sklearn"
+                    model_state["model"] = joblib.load(lr_path)
+                    model_state["vectorizer"] = joblib.load(vec_path)
+                    model_state["name"] = "Logistic Regression (Lightweight Cloud Tier)"
+                    model_state["metrics"] = {"accuracy": 0.6667, "macro_f1": 0.6451}
+                return
 
         model_state["name"] = best_name
         model_state["metrics"] = meta.get("metrics", {})
@@ -106,8 +165,7 @@ def load_model_state():
             _ = clean_text("Warmup initial text load")
             if model_state["type"] == "sklearn":
                 _ = model_state["model"].predict_proba(model_state["vectorizer"].transform(["warmup"]).toarray())
-            elif model_state["type"] == "transformer":
-                import torch
+            elif model_state["type"] == "transformer" and torch is not None:
                 inputs = model_state["tokenizer"]("Warmup initial text load", max_length=64, padding=True, truncation=True, return_tensors="pt")
                 with torch.no_grad():
                     _ = model_state["model"](**inputs)
@@ -247,7 +305,14 @@ def run_inference(raw_text: str) -> Dict[str, Any]:
     """
     load_model_state()
 
-    if "model" not in model_state or "vectorizer" not in model_state:
+    m_type = model_state.get("type")
+    if not m_type or "model" not in model_state:
+        return _rule_based_sentiment(raw_text)
+    if m_type == "sklearn" and "vectorizer" not in model_state:
+        return _rule_based_sentiment(raw_text)
+    if m_type == "keras" and "tokenizer" not in model_state:
+        return _rule_based_sentiment(raw_text)
+    if m_type == "transformer" and (torch is None or "tokenizer" not in model_state):
         return _rule_based_sentiment(raw_text)
 
     start_time = time.time()
@@ -301,6 +366,8 @@ def run_inference(raw_text: str) -> Dict[str, Any]:
                 else:
                     pred_label = int(np.argmax(probs))
         elif model_state["type"] == "transformer":
+            if torch is None:
+                return _rule_based_sentiment(raw_text)
             tokenizer = model_state["tokenizer"]
             model = model_state["model"]
             max_len = model_state.get("max_len", 64)

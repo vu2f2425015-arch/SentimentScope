@@ -1,51 +1,71 @@
 {
-  "best_model_name": "Logistic Regression",
+  "best_model_name": "DistilBERT (Full Dataset)",
   "details": {
-    "type": "sklearn",
-    "artifact": "logistic_regression.joblib",
-    "vectorizer": "tfidf_vectorizer.joblib"
+    "type": "transformer",
+    "artifact": "distilbert_transformer",
+    "tokenizer": "distilbert_transformer"
   },
   "metrics": {
-    "accuracy": 0.6667,
-    "precision_macro": 0.6661,
-    "recall_macro": 0.6331,
-    "macro_f1": 0.6451,
-    "brier_score": 0.4481,
+    "accuracy": 0.7257,
+    "precision_macro": 0.7159,
+    "recall_macro": 0.7305,
+    "macro_f1": 0.7221,
+    "brier_score": 0.3746,
     "confusion_matrix": [
       [
-        849,
-        691,
-        162
+        1264,
+        362,
+        77
       ],
       [
-        375,
-        3055,
-        669
+        567,
+        2881,
+        650
       ],
       [
-        104,
-        981,
-        2061
+        109,
+        689,
+        2347
       ]
     ],
     "class_metrics": {
       "negative": {
-        "precision": 0.6393,
-        "recall": 0.4988,
-        "f1": 0.5604
+        "precision": 0.6515,
+        "recall": 0.7422,
+        "f1": 0.6939
       },
       "neutral": {
-        "precision": 0.6463,
-        "recall": 0.7453,
-        "f1": 0.6923
+        "precision": 0.7327,
+        "recall": 0.703,
+        "f1": 0.7176
       },
       "positive": {
-        "precision": 0.7127,
-        "recall": 0.6551,
-        "f1": 0.6827
+        "precision": 0.7635,
+        "recall": 0.7463,
+        "f1": 0.7548
       }
+    }
+  },
+  "deployment_tiers": {
+    "high_accuracy_tier": {
+      "model_name": "DistilBERT (Full Dataset)",
+      "type": "transformer",
+      "artifact": "distilbert_transformer",
+      "tokenizer": "distilbert_transformer",
+      "accuracy": 0.7257,
+      "macro_f1": 0.7221,
+      "latency_api_ms": "32-38 ms",
+      "target_environment": "Local / GPU / Dedicated Compute (>=1GB RAM)"
     },
-    "cv_f1_mean": 0.6337,
-    "cv_f1_std": 0.006
+    "lightweight_cloud_tier": {
+      "model_name": "Logistic Regression (Lightweight Cloud Tier)",
+      "type": "sklearn",
+      "artifact": "logistic_regression.joblib",
+      "vectorizer": "tfidf_vectorizer.joblib",
+      "accuracy": 0.6667,
+      "macro_f1": 0.6451,
+      "latency_api_ms": "<1 ms",
+      "target_environment": "Render Free Tier / Edge / Serverless (512MB RAM)"
+    }
   }
 }

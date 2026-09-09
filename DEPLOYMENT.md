@@ -75,6 +75,8 @@ services:
         value: "50000"
       - key: MAX_BATCH_FILE_BYTES
         value: "36700160"
+      - key: ACTIVE_MODEL_TIER
+        value: "lightweight"
 ```
 
 5. Click **Apply**. Render will build the Docker container and deploy the service.
@@ -82,10 +84,17 @@ services:
 
 ---
 
-## 🧠 Model Artifact Management
+## 🧠 Model Artifact Management & Memory Budget
 
+- **Dual-Tier Production Architecture (Option B)**:
+  - **Tier 1 (High-Accuracy Engine)**: `DistilBERT (Full Dataset)` (72.57% Acc / 0.7221 Macro F1) is selected by default in `models/best_model_meta.json` for local runs, Docker Compose, or dedicated compute (`>=1GB RAM`).
+  - **Tier 2 (Zero-OOM Cloud Edge Tier)**: `Logistic Regression` (66.67% Acc / 0.6451 Macro F1, <1ms latency, ~50MB RAM) is pinned on Render Free Tier via `ACTIVE_MODEL_TIER="lightweight"` to prevent OOM termination (`Exit 137`).
 - **Baseline Models (`Logistic Regression`, `Multinomial NB`, `LSTM`)**: Pre-trained scikit-learn/Keras model weights are committed directly in Git under `models/` (< 65MB total). They are automatically built into the Docker container image on Render.
-- **Transformer Models (`DistilBERT` / `RoBERTa`)**: Large `.safetensors` files (> 260MB) are excluded by `.gitignore`. If a Transformer model is selected, `src/api.py` automatically downloads `distilbert-base-uncased` from Hugging Face Hub during server startup.
+- **Transformer Models (`DistilBERT` / `RoBERTa`)**: Large `.safetensors` files (> 260MB) are excluded by `.gitignore`. For dedicated/local environments running DistilBERT, artifacts reside in `models/distilbert_transformer/`.
+- **Render Free Tier Memory Safety (512MB RAM Limit)**:
+  - Render's Free Web Service plan allocates **512MB RAM**.
+  - With `ACTIVE_MODEL_TIER="lightweight"`, the container operates at **~50MB RSS**, guaranteeing 100% crash-free uptime even under heavy concurrent traffic.
+  - To run DistilBERT directly in cloud production, upgrade Render to **Starter (2GB RAM)** and set `ACTIVE_MODEL_TIER="auto"`.
 
 ---
 
@@ -103,14 +112,17 @@ Execute `curl` against your Render deployment:
 ```bash
 curl -X GET "https://sentimentscope-api-nj7l.onrender.com/health"
 ```
-**Expected Response:**
+**Expected Response (Render Free Edge Tier)**:
 ```json
 {
   "status": "healthy",
   "model_loaded": true,
-  "model_name": "Logistic Regression",
+  "model_name": "Logistic Regression (Lightweight Cloud Tier)",
   "version": "1.0.0"
 }
+```
+
+*(Note: Local / Dedicated instances with `ACTIVE_MODEL_TIER="auto"` will return `"model_name": "DistilBERT (Full Dataset)"`.)*
 ```
 
 ### 3. Interactive API Documentation

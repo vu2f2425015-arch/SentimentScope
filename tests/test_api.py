@@ -104,3 +104,57 @@ def test_predict_batch_oversized_rows():
             assert response.status_code == 400
             assert "exceeding the synchronous web batch limit" in response.json()["detail"]
 
+
+def test_transformer_inference_not_rule_based():
+    """
+    Regression Test:
+    Ensures that when a transformer model is active in model_state, the inference
+    pipeline executes model-based inference and DOES NOT silently fall back to
+    _rule_based_sentiment() due to checking for 'vectorizer' instead of 'tokenizer'.
+
+    Note on why the legacy test suite missed this bug:
+    The existing tests ran exclusively against Logistic Regression (type: sklearn)
+    which populated 'vectorizer' in model_state. The transformer inference branch
+    was never exercised in tests/test_api.py.
+    """
+    import os
+    from unittest.mock import patch, MagicMock
+    import numpy as np
+
+    # Test with mock transformer if weights not present, or verify directly
+    mock_model = MagicMock()
+    mock_tokenizer = MagicMock()
+    
+    import torch
+    mock_inputs = {
+        "input_ids": torch.tensor([[101, 2054, 102]])
+    }
+    mock_tokenizer.return_value = mock_inputs
+    
+    mock_output = MagicMock()
+    mock_output.logits = torch.tensor([[-2.0, 0.5, 4.0]])
+    mock_model.return_value = mock_output
+
+    transformer_state = {
+        "type": "transformer",
+        "model": mock_model,
+        "tokenizer": mock_tokenizer,
+        "name": "DistilBERT (Full Dataset)",
+        "max_len": 64,
+        "metrics": {"accuracy": 0.7257}
+    }
+
+    with patch.dict("src.api.model_state", transformer_state, clear=True):
+        with TestClient(app) as client:
+            resp = client.post("/predict", json={"text": "The battery life is phenomenal!"})
+            assert resp.status_code == 200
+            data = resp.json()
+
+            # Crucial assertion: Must NOT be the rule-based fallback signature
+            assert data["pipeline_model"] != "Logistic Regression (Serverless)"
+            assert data["pipeline_model"] == "DistilBERT (Full Dataset)"
+            assert data["tokenizer_type"] == "WordPiece Tokenizer (DistilBERT)"
+            assert data["sentiment"] == "positive"
+            assert "probabilities" in data
+            assert abs(sum(data["probabilities"].values()) - 1.0) < 0.01
+

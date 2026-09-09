@@ -20,3 +20,5 @@ services:
         value: "50000"
       - key: MAX_BATCH_FILE_BYTES
         value: "36700160"
+      - key: ACTIVE_MODEL_TIER
+        value: "lightweight"

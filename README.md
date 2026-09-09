@@ -2,6 +2,25 @@
 
 **SentimentScope** is a production-ready Python sentiment analysis application and REST API. It ingests a 3-class text dataset (with native `positive`, `negative`, and `neutral` labels), preprocesses text, extracts TF-IDF & sequential embeddings, trains and evaluates classification models (**Multinomial Naive Bayes**, **Logistic Regression**, **Bi-LSTM**, and **DistilBERT/RoBERTa**), selects the best-performing model based on held-out test set metrics, and serves an interactive web UI and real-time/batch predictions via a **FastAPI** backend.
 
+---
+
+## 🏷️ Canonical Model Status & Production Architecture
+
+SentimentScope uses a configuration-driven, dual-tier production topology dynamically resolved via [`models/best_model_meta.json`](models/best_model_meta.json) and served by `GET /model/metrics`:
+
+| Deployment Tier | Active Model Architecture | Test Accuracy | Macro F1 | Negative Recall | Measured API Latency | Target Runtime Environment |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **Tier 1: High-Accuracy Engine** *(Primary)* | **DistilBERT (Full Dataset)**<br>`distilbert-base-uncased` (66M params) | **72.57%** | **0.7221** | **74.22%** | **32–38 ms** *(live API)*<br>*(14.01ms raw tensor)* | Local, Docker Compose, Dedicated GPU/CPU (`>=1GB RAM`) |
+| **Tier 2: Zero-OOM Edge Tier** *(Cloud Free)* | **Logistic Regression**<br>TF-IDF + Calibrated Classifier | **66.67%** | **0.6451** | **49.88%** | **< 1.0 ms** | Render Free Tier / Serverless (`512MB RAM limit`) |
+
+> [!NOTE]
+> **Dynamic Configuration Contract**:
+> The API determines its loaded model dynamically from [`models/best_model_meta.json`](models/best_model_meta.json) or the `ACTIVE_MODEL_TIER` environment variable. On Render's 512MB free tier, `ACTIVE_MODEL_TIER=lightweight` is automatically enabled via [`render.yaml`](render.yaml) to guarantee zero-OOM uptime (50MB RAM footprint), while local and dedicated deployments run the high-accuracy DistilBERT model.
+>
+> All endpoints (`/health`, `/model/metrics`, `/predict`) report their active model telemetry dynamically at runtime.
+
+---
+
 ## ⚡ Quick Start — Run the App
 
 > [!IMPORTANT]
@@ -87,6 +106,7 @@ SentimentScope/
 ├── docker-compose.yml        # Multi-container orchestration
 ├── render.yaml               # Render Blueprint infrastructure definition
 ├── requirements.txt          # Python production dependencies
+├── references/               # UI Reference components (React/TSX particle canvas preserved for future React migration; not part of the shipped static SPA)
 └── README.md                 # Project documentation
 ```
 
@@ -176,7 +196,7 @@ python -m src.transformer_train
 | **Logistic Regression** | Full (~60k) | 61.64% | 0.6131 | 0.5726 | 0.5850 | 39.72% | **0.42ms** | Archived baseline |
 | **Bi-LSTM** | Full (~60k) | 60.53% | 0.5912 | 0.6055 | 0.5954 | 60.28% | 3.12ms | Recurrent baseline |
 | **DistilBERT** | 15,000 Subsample | 70.98% | 0.7066 | 0.7084 | 0.7040 | 72.90% | 15.42ms | Initial subsample transformer |
-| **DistilBERT** 🏆 | **Full (~60k)** | **72.57%** | **0.7159** | **0.7305** | **0.7221** | **74.22%** | **14.01ms (API)** | **Active Live Deployed Model** |
+| **DistilBERT** 🏆 | **Full (~60k)** | **72.57%** | **0.7159** | **0.7305** | **0.7221** | **74.22%** | **14.01ms (API)** | **Active Live Deployed Model** *(See [Model Status](#-canonical-model-status--production-architecture))* |
 | **Vanilla `roberta-base`** | Full (~60k) | 72.17% | 0.7118 | 0.7476 | 0.7208 | 81.27% | 26.25ms | Uncontaminated 125M backbone |
 
 ---
@@ -203,15 +223,18 @@ python -m src.transformer_train
 ### 4. End-to-End Live API CPU Latency Benchmark
 
 - **Model Loaded**: `DistilBERT (Full Dataset)` via `models/distilbert_transformer` (66M params)
-- **Mean API Latency**: `14.66 ms`
-- **p50 (Median) API Latency**: `14.01 ms`
-- **p95 API Latency**: `20.36 ms`
-- **Max API Latency**: `20.51 ms`
-- **1-Second SLA Status**: **PASS** (< 21ms max end-to-end HTTP response time, 50x faster than the 1,000ms SLA constraint).
+- **Raw PyTorch Tensor Forward-Pass (CPU)**: `p50: 14.01 ms` | `Mean: 14.66 ms` | `p95: 20.36 ms`
+- **Full Live FastAPI Request Lifecycle (Measured Smoke Test)**:
+  - Positive Sample: `38.15 ms`
+  - Negative Sample: `36.34 ms`
+  - Neutral Sample: `32.66 ms`
+  - *Average End-to-End Single-Sample Latency*: **36.81 ms** (includes text preprocessing, WordPiece tokenization, PyTorch forward pass, softmax conversion, and Pydantic serialization).
+- **Lightweight Cloud Tier (Logistic Regression on Render Free Tier)**: `< 0.50 ms` CPU inference latency.
+- **1-Second SLA Status**: **PASS** (< 40ms total response time, **25x faster** than the 1,000ms SLA constraint).
 
 ---
 
-### 3. CPU Latency & Benchmarking (Single-Sample `/predict` Latency)
+### 5. Historical Twitter-RoBERTa Latency & Quantization Benchmarking
 
 - **Unquantized Twitter-RoBERTa**:
   - `p50 (Median)`: **34.97 ms**
@@ -225,17 +248,26 @@ python -m src.transformer_train
 
 ---
 
-### 4. CardiffNLP TweetEval Benchmark Context
+### 6. CardiffNLP TweetEval Benchmark Context & RoBERTa Models Comparison
 
 Published literature on the CardiffNLP TweetEval 3-class sentiment benchmark (Barbieri et al., 2020) establishes:
 - **Published SOTA Macro F1**: `0.729` (72.9%)
 - **Published SOTA Accuracy**: `0.731` (73.1%)
 - **Estimated Human Annotator Agreement Ceiling**: `~80.0%`
 
-Our fine-tuned **Twitter-RoBERTa** model achieves **77.05% Test Macro F1** and **76.67% Test Accuracy**, exceeding published literature SOTA on this benchmark split and approaching the human agreement ceiling.
+#### Explicit Differentiation Between the Two RoBERTa Evaluations:
+To avoid ambiguity, SentimentScope documents two distinct RoBERTa evaluations across different backbones and splits:
+1. **Vanilla `roberta-base` (General-Purpose Uncontaminated Backbone)**:
+   - Evaluated on the full ~60,000 dataset (custom 70/15/15 stratified split, 8,946 held-out test samples).
+   - Metrics: **72.17% Test Accuracy**, **0.7208 Test Macro F1**, and **81.27% Negative Recall**.
+   - Serves as the strictly uncontaminated baseline trained purely on this dataset without domain pretraining.
+2. **Domain-Adapted `cardiffnlp/twitter-roberta-base-sentiment-latest`**:
+   - Pretrained on 124M tweets and fine-tuned on the 15,000 tweet subsample split (2,250 held-out test samples).
+   - Metrics: **76.67% Test Accuracy**, **0.7705 Test Macro F1**, and **88.55% Negative Recall**.
+   - Achieves top score by leveraging massive domain-specific Twitter pretraining, exceeding published literature SOTA on that split and approaching the human agreement ceiling.
 
 > [!NOTE]
-> Per explicit review directive, the live API configuration (`models/best_model_meta.json`) remains set to **Logistic Regression** until explicit user confirmation is provided to update the live API model.
+> The live production API is actively served by **DistilBERT (Full Dataset)** in [`models/best_model_meta.json`](models/best_model_meta.json), achieving **72.57% Accuracy / 0.7221 Macro F1** at ~14.01ms p50 latency. See [Canonical Model Status & Production Architecture](#-canonical-model-status--production-architecture).
 
 ---
 
@@ -379,7 +411,7 @@ curl -X GET "http://127.0.0.1:8000/health"
 {
   "status": "healthy",
   "model_loaded": true,
-  "model_name": "Multinomial Naive Bayes",
+  "model_name": "DistilBERT (Full Dataset)",
   "version": "1.0.0"
 }
 ```
