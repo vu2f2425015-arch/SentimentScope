@@ -43,6 +43,24 @@ MAX_BATCH_FILE_BYTES = int(os.getenv("MAX_BATCH_FILE_BYTES", str(25 * 1024 * 102
 model_state: Dict[str, Any] = {}
 ingestion_task: Optional[asyncio.Task] = None
 
+LIGHTWEIGHT_METRICS = {
+    "accuracy": 0.6667,
+    "precision_macro": 0.6661,
+    "recall_macro": 0.6331,
+    "macro_f1": 0.6451,
+    "brier_score": 0.4481,
+    "confusion_matrix": [
+        [849, 691, 162],
+        [375, 3055, 669],
+        [104, 981, 2061]
+    ],
+    "class_metrics": {
+        "negative": {"precision": 0.6393, "recall": 0.4988, "f1": 0.5604},
+        "neutral": {"precision": 0.6463, "recall": 0.7453, "f1": 0.6923},
+        "positive": {"precision": 0.7127, "recall": 0.6551, "f1": 0.6827}
+    }
+}
+
 
 def load_model_state():
     """
@@ -73,12 +91,7 @@ def load_model_state():
                 model_state["model"] = joblib.load(lr_path)
                 model_state["vectorizer"] = joblib.load(vec_path)
                 model_state["name"] = "Logistic Regression (Lightweight Cloud Tier)"
-                model_state["metrics"] = {
-                    "accuracy": 0.6667,
-                    "precision_macro": 0.6661,
-                    "recall_macro": 0.6331,
-                    "macro_f1": 0.6451
-                }
+                model_state["metrics"] = LIGHTWEIGHT_METRICS
                 print("[API] Loaded active lightweight cloud tier: 'Logistic Regression' (sklearn).")
                 return
 
@@ -655,7 +668,9 @@ def get_model_metrics():
             meta_data = json.load(f)
 
     active_name = model_state.get("name") or meta_data.get("best_model_name", "DistilBERT (Full Dataset)")
-    active_metrics = meta_data.get("metrics", {})
+    active_metrics = model_state.get("metrics") or meta_data.get("metrics", {})
+    if not active_metrics and "Lightweight" in active_name:
+        active_metrics = LIGHTWEIGHT_METRICS
 
     models_dict = {}
     if os.path.exists(trans_report_path):
@@ -672,12 +687,21 @@ def get_model_metrics():
     if active_name not in models_dict and active_metrics:
         models_dict[active_name] = active_metrics
 
+    active_details = meta_data.get("details", {})
+    if model_state.get("type") == "sklearn" and "Lightweight" in active_name:
+        active_details = {
+            "type": "sklearn",
+            "artifact": "logistic_regression.joblib",
+            "vectorizer": "tfidf_vectorizer.joblib"
+        }
+
     response = {
         "best_model": active_name,
         "best_model_name": active_name,
         "metrics": active_metrics,
         "models": models_dict,
-        "details": meta_data.get("details", {})
+        "details": active_details,
+        "deployment_tiers": meta_data.get("deployment_tiers", {})
     }
 
     if os.path.exists(report_path):
