@@ -92,6 +92,11 @@ def load_model_state():
                 try:
                     loaded_model = joblib.load(lr_path)
                     loaded_vec = joblib.load(vec_path)
+                    
+                    # Backward-compatibility patch for scikit-learn unpickling across versions (<1.8 vs >=1.8)
+                    if not hasattr(loaded_model, "multi_class"):
+                        setattr(loaded_model, "multi_class", "auto")
+
                     # Verify inference runs cleanly without binary unpickling incompatibility
                     _w_feats = loaded_vec.transform(["warmup"])
                     _ = loaded_model.predict_proba(_w_feats)
@@ -104,6 +109,13 @@ def load_model_state():
                     return
                 except Exception as lr_err:
                     print(f"[API Error] Failed to load/verify lightweight model artifacts: {lr_err}")
+            
+            # CRITICAL: Prevent falling through to transformer on lightweight cloud tier (causes 512MB RAM OOM)
+            print("[API Warning] Active tier is 'lightweight' but model artifacts failed verification. Operating with safe rule-based classifier.")
+            model_state["type"] = "rule_based"
+            model_state["name"] = "Rule-Based Engine (Cloud Edge Fallback)"
+            model_state["metrics"] = LIGHTWEIGHT_METRICS
+            return
 
         with open(meta_path, "r") as f:
             meta = json.load(f)
@@ -362,6 +374,8 @@ def run_inference(raw_text: str) -> Dict[str, Any]:
             is_oov = True
         else:
             if model_state["type"] == "sklearn":
+                if not hasattr(model_state["model"], "multi_class"):
+                    setattr(model_state["model"], "multi_class", "auto")
                 features = model_state["vectorizer"].transform([cleaned]).toarray()
                 nnz_count = int(np.count_nonzero(features))
                 feat_sum = round(float(np.sum(features)), 4)
@@ -583,6 +597,8 @@ async def predict_batch(file: UploadFile = File(...)):
     # Vectorized batch processing: 50x faster than iterrows()
     if model_state.get("type") == "sklearn" and "vectorizer" in model_state:
         try:
+            if not hasattr(model_state["model"], "multi_class"):
+                setattr(model_state["model"], "multi_class", "auto")
             cleaned_texts = [clean_text(t) for t in texts]
             features = model_state["vectorizer"].transform(cleaned_texts)
             probs = model_state["model"].predict_proba(features)
