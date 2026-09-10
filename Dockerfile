@@ -25,7 +25,7 @@ RUN pip install --no-cache-dir torch --extra-index-url https://download.pytorch.
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Pre-download NLTK data during build phase to avoid runtime download latencies
-RUN python -c "import nltk; nltk.download('punkt', quiet=True); nltk.download('stopwords', quiet=True); nltk.download('wordnet', quiet=True); nltk.download('omw-1.4', quiet=True)"
+RUN python -c "import nltk; nltk.download('punkt', quiet=True); nltk.download('punkt_tab', quiet=True); nltk.download('stopwords', quiet=True); nltk.download('wordnet', quiet=True); nltk.download('omw-1.4', quiet=True)"
 
 # Copy application directories and source code
 COPY src/ ./src/

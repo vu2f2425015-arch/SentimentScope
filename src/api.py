@@ -89,13 +89,21 @@ def load_model_state():
             lr_path = os.path.join(MODELS_DIR, "logistic_regression.joblib")
             vec_path = os.path.join(MODELS_DIR, "tfidf_vectorizer.joblib")
             if os.path.exists(lr_path) and os.path.exists(vec_path):
-                model_state["type"] = "sklearn"
-                model_state["model"] = joblib.load(lr_path)
-                model_state["vectorizer"] = joblib.load(vec_path)
-                model_state["name"] = "Logistic Regression (Lightweight Cloud Tier)"
-                model_state["metrics"] = LIGHTWEIGHT_METRICS
-                print("[API] Loaded active lightweight cloud tier: 'Logistic Regression' (sklearn).")
-                return
+                try:
+                    loaded_model = joblib.load(lr_path)
+                    loaded_vec = joblib.load(vec_path)
+                    # Verify inference runs cleanly without binary unpickling incompatibility
+                    _w_feats = loaded_vec.transform(["warmup"])
+                    _ = loaded_model.predict_proba(_w_feats)
+                    model_state["type"] = "sklearn"
+                    model_state["model"] = loaded_model
+                    model_state["vectorizer"] = loaded_vec
+                    model_state["name"] = "Logistic Regression (Lightweight Cloud Tier)"
+                    model_state["metrics"] = LIGHTWEIGHT_METRICS
+                    print("[API] Loaded and verified active lightweight cloud tier: 'Logistic Regression' (sklearn).")
+                    return
+                except Exception as lr_err:
+                    print(f"[API Error] Failed to load/verify lightweight model artifacts: {lr_err}")
 
         with open(meta_path, "r") as f:
             meta = json.load(f)
@@ -328,109 +336,113 @@ def run_inference(raw_text: str) -> Dict[str, Any]:
 
     start_time = time.time()
     
-    # Select text preprocessing appropriate for the active model family
-    if model_state.get("type") == "transformer":
-        cleaned = minimal_clean_text(raw_text)
-        m_name = model_state.get("name", "").lower()
-        if "roberta" in m_name:
-            tokenizer_name = "BPE Tokenizer (RoBERTa)"
-        elif "distilbert" in m_name:
-            tokenizer_name = "WordPiece Tokenizer (DistilBERT)"
+    try:
+        # Select text preprocessing appropriate for the active model family
+        if model_state.get("type") == "transformer":
+            cleaned = minimal_clean_text(raw_text)
+            m_name = model_state.get("name", "").lower()
+            if "roberta" in m_name:
+                tokenizer_name = "BPE Tokenizer (RoBERTa)"
+            elif "distilbert" in m_name:
+                tokenizer_name = "WordPiece Tokenizer (DistilBERT)"
+            else:
+                tokenizer_name = "Transformer Subword Tokenizer"
         else:
-            tokenizer_name = "Transformer Subword Tokenizer"
-    else:
-        cleaned = clean_text(raw_text)
-        tokenizer_name = "Hybrid TF-IDF Vectorizer (Word + Char Subwords)" if model_state.get("type") == "sklearn" else "Sequential Tokenizer"
-    
-    nnz_count = 0
-    feat_sum = 0.0
-    is_oov = False
-    
-    # If text becomes empty after cleaning, handle gracefully as neutral fallback
-    if not cleaned:
-        probs = np.array([0.3333, 0.3334, 0.3333])
-        pred_label = 1 # Neutral fallback
-        is_oov = True
-    else:
-        if model_state["type"] == "sklearn":
-            features = model_state["vectorizer"].transform([cleaned]).toarray()
-            nnz_count = int(np.count_nonzero(features))
-            feat_sum = round(float(np.sum(features)), 4)
-            
-            if nnz_count == 0:
-                # All-zero feature vector (Out-Of-Vocabulary input)
-                probs = np.array([0.3333, 0.3334, 0.3333])
-                pred_label = 1  # Neutral fallback for uninformative text
-                is_oov = True
-            else:
-                probs = model_state["model"].predict_proba(features)[0]
-                # Negative recall threshold tuning (rescues false neutrals)
-                theta_neg = float(os.getenv("NEGATIVE_RECALL_THRESHOLD", "0.34"))
-                if (probs[0] >= theta_neg) and (probs[0] > (probs[2] + 0.05)):
-                    pred_label = 0
-                elif (np.max(probs) - np.min(probs)) < 0.005:
-                    pred_label = 1  # Neutral fallback for tie / non-discriminating
+            cleaned = clean_text(raw_text)
+            tokenizer_name = "Hybrid TF-IDF Vectorizer (Word + Char Subwords)" if model_state.get("type") == "sklearn" else "Sequential Tokenizer"
+        
+        nnz_count = 0
+        feat_sum = 0.0
+        is_oov = False
+        
+        # If text becomes empty after cleaning, handle gracefully as neutral fallback
+        if not cleaned:
+            probs = np.array([0.3333, 0.3334, 0.3333])
+            pred_label = 1 # Neutral fallback
+            is_oov = True
+        else:
+            if model_state["type"] == "sklearn":
+                features = model_state["vectorizer"].transform([cleaned]).toarray()
+                nnz_count = int(np.count_nonzero(features))
+                feat_sum = round(float(np.sum(features)), 4)
+                
+                if nnz_count == 0:
+                    # All-zero feature vector (Out-Of-Vocabulary input)
+                    probs = np.array([0.3333, 0.3334, 0.3333])
+                    pred_label = 1  # Neutral fallback for uninformative text
+                    is_oov = True
                 else:
-                    pred_label = int(np.argmax(probs))
-        elif model_state["type"] == "keras":
-            seq = model_state["tokenizer"].transform([cleaned])
-            nnz_count = int(np.count_nonzero(seq))
-            feat_sum = float(np.sum(seq))
-            if nnz_count == 0:
-                probs = np.array([0.3333, 0.3334, 0.3333])
-                pred_label = 1
-                is_oov = True
-            else:
-                probs = model_state["model"].predict(seq, verbose=0)[0]
-                if (np.max(probs) - np.min(probs)) < 0.005:
+                    probs = model_state["model"].predict_proba(features)[0]
+                    # Negative recall threshold tuning (rescues false neutrals)
+                    theta_neg = float(os.getenv("NEGATIVE_RECALL_THRESHOLD", "0.34"))
+                    if (probs[0] >= theta_neg) and (probs[0] > (probs[2] + 0.05)):
+                        pred_label = 0
+                    elif (np.max(probs) - np.min(probs)) < 0.005:
+                        pred_label = 1  # Neutral fallback for tie / non-discriminating
+                    else:
+                        pred_label = int(np.argmax(probs))
+            elif model_state["type"] == "keras":
+                seq = model_state["tokenizer"].transform([cleaned])
+                nnz_count = int(np.count_nonzero(seq))
+                feat_sum = float(np.sum(seq))
+                if nnz_count == 0:
+                    probs = np.array([0.3333, 0.3334, 0.3333])
                     pred_label = 1
+                    is_oov = True
+                else:
+                    probs = model_state["model"].predict(seq, verbose=0)[0]
+                    if (np.max(probs) - np.min(probs)) < 0.005:
+                        pred_label = 1
+                    else:
+                        pred_label = int(np.argmax(probs))
+            elif model_state["type"] == "transformer":
+                if torch is None:
+                    return _rule_based_sentiment(raw_text)
+                tokenizer = model_state["tokenizer"]
+                model = model_state["model"]
+                max_len = model_state.get("max_len", 64)
+                inputs = tokenizer(cleaned, max_length=max_len, padding=True, truncation=True, return_tensors="pt")
+                with torch.no_grad():
+                    outputs = model(**inputs)
+                    probs_tensor = torch.softmax(outputs.logits, dim=-1).squeeze(0)
+                    probs = probs_tensor.cpu().numpy()
+                
+                nnz_count = int(inputs["input_ids"].shape[1])
+                feat_sum = float(torch.sum(inputs["input_ids"]).item())
+                
+                if (np.max(probs) - np.min(probs)) < 0.005:
+                    pred_label = 1  # Neutral fallback
                 else:
                     pred_label = int(np.argmax(probs))
-        elif model_state["type"] == "transformer":
-            if torch is None:
-                return _rule_based_sentiment(raw_text)
-            tokenizer = model_state["tokenizer"]
-            model = model_state["model"]
-            max_len = model_state.get("max_len", 64)
-            inputs = tokenizer(cleaned, max_length=max_len, padding=True, truncation=True, return_tensors="pt")
-            with torch.no_grad():
-                outputs = model(**inputs)
-                probs_tensor = torch.softmax(outputs.logits, dim=-1).squeeze(0)
-                probs = probs_tensor.cpu().numpy()
-            
-            nnz_count = int(inputs["input_ids"].shape[1])
-            feat_sum = float(torch.sum(inputs["input_ids"]).item())
-            
-            if (np.max(probs) - np.min(probs)) < 0.005:
-                pred_label = 1  # Neutral fallback
-            else:
-                pred_label = int(np.argmax(probs))
 
-    confidence = float(np.max(probs))
-    sentiment_str = REVERSE_LABEL_MAP[pred_label]
-    model_name = model_state.get("name", "Unknown Model")
-    
-    probabilities_dict = {
-        "negative": round(float(probs[0]), 4),
-        "neutral": round(float(probs[1]), 4),
-        "positive": round(float(probs[2]), 4)
-    }
-    
-    latency_ms = round((time.time() - start_time) * 1000, 2)
-    
-    # Diagnostic print for debugging feature extraction & probabilities
-    print(f"[Inference Debug] Input: '{raw_text}' | Cleaned: '{cleaned}' | Model: {model_name} | Probs: {probabilities_dict} -> Sentiment: {sentiment_str}")
-    
-    return {
-        "text": raw_text,
-        "cleaned_text": cleaned,
-        "sentiment": sentiment_str,
-        "confidence": round(confidence, 4),
-        "probabilities": probabilities_dict,
-        "latency_ms": latency_ms,
-        "pipeline_model": model_name,
-        "tokenizer_type": tokenizer_name
-    }
+        confidence = float(np.max(probs))
+        sentiment_str = REVERSE_LABEL_MAP[pred_label]
+        model_name = model_state.get("name", "Unknown Model")
+        
+        probabilities_dict = {
+            "negative": round(float(probs[0]), 4),
+            "neutral": round(float(probs[1]), 4),
+            "positive": round(float(probs[2]), 4)
+        }
+        
+        latency_ms = round((time.time() - start_time) * 1000, 2)
+        
+        # Diagnostic print for debugging feature extraction & probabilities
+        print(f"[Inference Debug] Input: '{raw_text}' | Cleaned: '{cleaned}' | Model: {model_name} | Probs: {probabilities_dict} -> Sentiment: {sentiment_str}")
+        
+        return {
+            "text": raw_text,
+            "cleaned_text": cleaned,
+            "sentiment": sentiment_str,
+            "confidence": round(confidence, 4),
+            "probabilities": probabilities_dict,
+            "latency_ms": latency_ms,
+            "pipeline_model": model_name,
+            "tokenizer_type": tokenizer_name
+        }
+    except Exception as inf_err:
+        print(f"[API Inference Error] Failed to run inference on '{raw_text}': {inf_err}")
+        return _rule_based_sentiment(raw_text)
 
 
 
@@ -490,7 +502,11 @@ def predict(payload: PredictRequest):
             detail="Input text cannot be empty or whitespace only."
         )
         
-    return run_inference(payload.text)
+    try:
+        return run_inference(payload.text)
+    except Exception as err:
+        print(f"[API Predict Fallback] Unexpected error: {err}")
+        return _rule_based_sentiment(payload.text)
 
 
 @app.post("/predict/batch", response_model=BatchSummary)
@@ -561,36 +577,46 @@ async def predict_batch(file: UploadFile = File(...)):
             "note": None
         }
 
+    results = []
+    sentiments = []
+
     # Vectorized batch processing: 50x faster than iterrows()
     if model_state.get("type") == "sklearn" and "vectorizer" in model_state:
-        cleaned_texts = [clean_text(t) for t in texts]
-        features = model_state["vectorizer"].transform(cleaned_texts)
-        probs = model_state["model"].predict_proba(features)
-        pred_labels = np.argmax(probs, axis=1)
-        confidences = np.max(probs, axis=1)
-        sentiments = [REVERSE_LABEL_MAP[int(l)] for l in pred_labels]
+        try:
+            cleaned_texts = [clean_text(t) for t in texts]
+            features = model_state["vectorizer"].transform(cleaned_texts)
+            probs = model_state["model"].predict_proba(features)
+            pred_labels = np.argmax(probs, axis=1)
+            confidences = np.max(probs, axis=1)
+            sentiments = [REVERSE_LABEL_MAP[int(l)] for l in pred_labels]
 
-        # Preview list capped at 200 rows to keep JSON payload lightweight for browser DOM
-        preview_limit = min(total, 200)
-        results = []
-        for i in range(preview_limit):
-            results.append({
-                "text": texts[i],
-                "cleaned_text": cleaned_texts[i],
-                "sentiment": sentiments[i],
-                "confidence": round(float(confidences[i]), 4),
-                "probabilities": {
-                    "negative": round(float(probs[i][0]), 4),
-                    "neutral": round(float(probs[i][1]), 4),
-                    "positive": round(float(probs[i][2]), 4)
-                },
-                "latency_ms": 0.5,
-                "pipeline_model": model_state.get("name", "Logistic Regression"),
-                "tokenizer_type": "TF-IDF Vectorizer"
-            })
+            # Preview list capped at 200 rows to keep JSON payload lightweight for browser DOM
+            preview_limit = min(total, 200)
+            for i in range(preview_limit):
+                results.append({
+                    "text": texts[i],
+                    "cleaned_text": cleaned_texts[i],
+                    "sentiment": sentiments[i],
+                    "confidence": round(float(confidences[i]), 4),
+                    "probabilities": {
+                        "negative": round(float(probs[i][0]), 4),
+                        "neutral": round(float(probs[i][1]), 4),
+                        "positive": round(float(probs[i][2]), 4)
+                    },
+                    "latency_ms": 0.5,
+                    "pipeline_model": model_state.get("name", "Logistic Regression"),
+                    "tokenizer_type": "TF-IDF Vectorizer"
+                })
+        except Exception as batch_err:
+            print(f"[API Batch Warning] Vectorized batch inference failed, falling back to row-by-row: {batch_err}")
+            results = []
+            sentiments = []
+            for raw_text in texts:
+                res = run_inference(raw_text)
+                sentiments.append(res["sentiment"])
+                if len(results) < 200:
+                    results.append(res)
     else:
-        results = []
-        sentiments = []
         for raw_text in texts:
             res = run_inference(raw_text)
             sentiments.append(res["sentiment"])

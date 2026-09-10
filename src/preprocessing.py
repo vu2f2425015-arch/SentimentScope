@@ -110,12 +110,14 @@ def clean_text(text: str) -> str:
     except Exception:
         tokens = text.split()
         
-    # 7. Remove non-negation stopwords and 8. Lemmatize
-    cleaned_tokens = [
-        _lemmatizer.lemmatize(token)
-        for token in tokens
-        if token not in _stop_words and len(token) > 1
-    ]
+    # 7. Remove non-negation stopwords and 8. Lemmatize (with fallback if WordNet lookup fails)
+    cleaned_tokens = []
+    for token in tokens:
+        if token not in _stop_words and len(token) > 1:
+            try:
+                cleaned_tokens.append(_lemmatizer.lemmatize(token))
+            except Exception:
+                cleaned_tokens.append(token)
     
     return " ".join(cleaned_tokens)
 
