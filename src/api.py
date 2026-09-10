@@ -223,7 +223,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="SentimentScope API",
     description="Production REST API for real-time and batch 3-class sentiment analysis.",
-    version="1.0.0",
+    version="1.0.1",
     lifespan=lifespan
 )
 
@@ -459,7 +459,7 @@ def health():
         "status": "healthy" if is_loaded else "degraded",
         "model_loaded": is_loaded,
         "model_name": model_state.get("name", "Logistic Regression"),
-        "version": "1.0.0"
+        "version": "1.0.1"
     }
 
 

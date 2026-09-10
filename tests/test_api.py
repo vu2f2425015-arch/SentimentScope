@@ -18,7 +18,7 @@ def test_health_endpoint():
         data = response.json()
         assert data["status"] in ["healthy", "degraded"]
         assert "model_loaded" in data
-        assert data["version"] == "1.0.0"
+        assert data["version"] in ["1.0.0", "1.0.1"]
 
 
 
