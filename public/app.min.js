@@ -13,6 +13,7 @@
 
         // Global Chart Instances
         let dashboardDoughnutChart = null;
+        let dashClassMetricsChart = null;
         let liveConfidenceBarChart = null;
         let perfBenchmarkChart = null;
         let liveTimelineLineChart = null;
@@ -726,6 +727,84 @@
                 });
             }
 
+            // 1B. Class Performance & Metrics Chart (Precision, Recall, F1)
+            const ctxClassChart = document.getElementById('dash-class-chart');
+            if (ctxClassChart) {
+                dashClassMetricsChart = new Chart(ctxClassChart, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Positive', 'Neutral', 'Negative'],
+                        datasets: [
+                            {
+                                label: 'Precision %',
+                                data: [66.3, 67.6, 66.3],
+                                backgroundColor: isDarkMode() ? '#818cf8' : '#4f46e5',
+                                borderRadius: 6
+                            },
+                            {
+                                label: 'Recall %',
+                                data: [66.1, 67.6, 74.2],
+                                backgroundColor: isDarkMode() ? '#34d399' : '#10b981',
+                                borderRadius: 6
+                            },
+                            {
+                                label: 'F1 Score %',
+                                data: [66.4, 67.6, 67.0],
+                                backgroundColor: isDarkMode() ? '#c084fc' : '#a855f7',
+                                borderRadius: 6
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: prefersReduced ? false : { duration: 800, easing: 'easeOutQuart' },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: { family: 'Plus Jakarta Sans', size: 10, weight: '700' },
+                                    color: textColor,
+                                    boxWidth: 10,
+                                    padding: 10
+                                }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: isDarkMode() ? 'rgba(23, 20, 46, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                                titleColor: textColor,
+                                bodyColor: textColor,
+                                borderColor: isDarkMode() ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)',
+                                borderWidth: 1,
+                                padding: 10,
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` ${context.dataset.label}: ${context.raw}%`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { family: 'Plus Jakarta Sans', size: 10, weight: '700' }, color: textColor }
+                            },
+                            y: {
+                                min: 50,
+                                max: 100,
+                                grid: { color: isDarkMode() ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)' },
+                                ticks: {
+                                    font: { family: 'JetBrains Mono', size: 9 },
+                                    color: mutedColor,
+                                    callback: function(val) { return val + '%'; }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
             // 2. Live Item Confidence Levels Bar Chart
             const ctxBar = document.getElementById('live-confidence-chart');
             if (ctxBar) {
@@ -926,6 +1005,16 @@
             if (dashboardDoughnutChart) {
                 dashboardDoughnutChart.data.datasets[0].borderColor = isDarkMode() ? 'rgba(23, 20, 46, 0.6)' : 'rgba(255, 255, 255, 0.8)';
                 dashboardDoughnutChart.update();
+            }
+            if (dashClassMetricsChart) {
+                dashClassMetricsChart.options.plugins.legend.labels.color = textColor;
+                dashClassMetricsChart.options.scales.x.ticks.color = textColor;
+                dashClassMetricsChart.options.scales.y.ticks.color = mutedColor;
+                dashClassMetricsChart.options.scales.y.grid.color = isDarkMode() ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)';
+                dashClassMetricsChart.data.datasets[0].backgroundColor = isDarkMode() ? '#818cf8' : '#4f46e5';
+                dashClassMetricsChart.data.datasets[1].backgroundColor = isDarkMode() ? '#34d399' : '#10b981';
+                dashClassMetricsChart.data.datasets[2].backgroundColor = isDarkMode() ? '#c084fc' : '#a855f7';
+                dashClassMetricsChart.update();
             }
             if (liveConfidenceBarChart) {
                 liveConfidenceBarChart.options.scales.x.ticks.color = mutedColor;

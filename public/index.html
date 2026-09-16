@@ -281,46 +281,40 @@
 
             <!-- Dashboard Main Content Grid -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <!-- Model Specs & Performance Card -->
-                <div class="lg:col-span-6 glass-card p-6 md:p-8 rounded-3xl flex flex-col justify-between space-y-6 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-transparent border border-indigo-500/20">
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
-                                Active Pipeline Specs
-                            </span>
-                            <span class="material-symbols-outlined text-indigo-400 text-2xl">psychology</span>
-                        </div>
+                <!-- Class-wise Model Performance & Attribution Chart -->
+                <div class="lg:col-span-6 glass-card p-6 md:p-8 rounded-3xl flex flex-col justify-between space-y-4 relative group">
+                    <div class="flex items-center justify-between">
                         <div>
-                            <h3 class="font-headline font-bold text-xl text-on-background tracking-tight">NLP Classification Engine</h3>
-                            <p class="text-xs text-on-surface-variant leading-relaxed mt-1">
-                                Modernized Hybrid TF-IDF + Logistic Regression with word n-grams (1,2), subword char n-grams (3,5), and negation contraction expansion.
-                            </p>
+                            <h3 class="font-headline font-bold text-lg text-on-background flex items-center gap-2">
+                                <span class="material-symbols-outlined text-indigo-400">bar_chart</span>
+                                Class Performance Metrics
+                            </h3>
+                            <p class="text-xs text-on-surface-variant mt-0.5">Precision, Recall & F1-Score breakdown per sentiment class</p>
                         </div>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-                            <div class="glass-inner p-3 rounded-2xl text-center">
-                                <span class="text-[10px] font-bold text-on-surface-variant block uppercase tracking-wider">Accuracy</span>
-                                <span class="text-base font-extrabold text-on-background mt-0.5 block">65.9%</span>
-                            </div>
-                            <div class="glass-inner p-3 rounded-2xl text-center">
-                                <span class="text-[10px] font-bold text-on-surface-variant block uppercase tracking-wider">Macro F1</span>
-                                <span class="text-base font-extrabold text-indigo-400 mt-0.5 block">0.6528</span>
-                            </div>
-                            <div class="glass-inner p-3 rounded-2xl text-center">
-                                <span class="text-[10px] font-bold text-on-surface-variant block uppercase tracking-wider">Neg Recall</span>
-                                <span class="text-base font-extrabold text-emerald-400 mt-0.5 block">74.2%</span>
-                            </div>
-                            <div class="glass-inner p-3 rounded-2xl text-center">
-                                <span class="text-[10px] font-bold text-on-surface-variant block uppercase tracking-wider">Kernel Latency</span>
-                                <span class="text-base font-extrabold text-purple-400 mt-0.5 block">0.55ms</span>
-                            </div>
-                        </div>
+                        <span class="text-[10px] glass-inner px-2.5 py-1 rounded-full text-indigo-400 font-bold uppercase border border-indigo-500/20">
+                            3-Class Metrics
+                        </span>
                     </div>
-                    <div>
-                        <button onclick="switchTab('performance')" class="w-full min-h-[44px] bg-gradient-to-r from-indigo-500/20 to-purple-500/20 hover:from-indigo-500/30 hover:to-purple-500/30 text-indigo-200 font-bold px-6 py-3 rounded-xl border border-indigo-500/40 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary">
-                            <span>View Model Performance Matrix</span>
-                            <span class="material-symbols-outlined text-base">analytics</span>
-                        </button>
+
+                    <!-- Chart Canvas Wrapper -->
+                    <div class="relative w-full flex items-center justify-center" style="height: 200px">
+                        <canvas id="dash-class-chart" aria-label="Class Performance Bar Chart" role="img"></canvas>
+                    </div>
+
+                    <!-- Metric Stat Pills -->
+                    <div class="grid grid-cols-3 gap-2 text-center pt-2 border-t border-card-border">
+                        <div class="p-2 glass-inner rounded-xl">
+                            <span class="text-[10px] text-emerald-400 font-bold block uppercase tracking-wider">Positive F1</span>
+                            <span class="font-extrabold text-emerald-400 text-sm">66.4%</span>
+                        </div>
+                        <div class="p-2 glass-inner rounded-xl">
+                            <span class="text-[10px] text-amber-400 font-bold block uppercase tracking-wider">Neutral F1</span>
+                            <span class="font-extrabold text-amber-400 text-sm">67.6%</span>
+                        </div>
+                        <div class="p-2 glass-inner rounded-xl">
+                            <span class="text-[10px] text-rose-400 font-bold block uppercase tracking-wider">Neg Recall</span>
+                            <span class="font-extrabold text-rose-400 text-sm">74.2%</span>
+                        </div>
                     </div>
                 </div>
 
