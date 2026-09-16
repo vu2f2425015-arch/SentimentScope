@@ -1403,6 +1403,130 @@
             });
         }
 
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        let batchState = {
+            allPredictions: [],
+            filteredPredictions: [],
+            currentPage: 1,
+            pageSize: 25
+        };
+
+        function initBatchPaginationControls() {
+            const searchInput = document.getElementById('batch-search-input');
+            const pageSizeSelect = document.getElementById('batch-page-size');
+            const prevBtn = document.getElementById('batch-prev-page');
+            const nextBtn = document.getElementById('batch-next-page');
+
+            if (searchInput) {
+                searchInput.addEventListener('input', () => {
+                    const q = searchInput.value.trim().toLowerCase();
+                    if (!q) {
+                        batchState.filteredPredictions = batchState.allPredictions;
+                    } else {
+                        batchState.filteredPredictions = batchState.allPredictions.filter(item =>
+                            (item.text && item.text.toLowerCase().includes(q)) ||
+                            (item.sentiment && item.sentiment.toLowerCase().includes(q))
+                        );
+                    }
+                    batchState.currentPage = 1;
+                    renderBatchTablePage();
+                });
+            }
+
+            if (pageSizeSelect) {
+                pageSizeSelect.addEventListener('change', () => {
+                    batchState.pageSize = parseInt(pageSizeSelect.value, 10) || 25;
+                    batchState.currentPage = 1;
+                    renderBatchTablePage();
+                });
+            }
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    if (batchState.currentPage > 1) {
+                        batchState.currentPage--;
+                        renderBatchTablePage();
+                    }
+                });
+            }
+
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    const totalPages = Math.ceil(batchState.filteredPredictions.length / batchState.pageSize) || 1;
+                    if (batchState.currentPage < totalPages) {
+                        batchState.currentPage++;
+                        renderBatchTablePage();
+                    }
+                });
+            }
+        }
+
+        function renderBatchTablePage() {
+            const tableBody = document.getElementById('batch-table-body');
+            const paginationInfo = document.getElementById('batch-pagination-info');
+            const pageIndicator = document.getElementById('batch-page-indicator');
+            const prevBtn = document.getElementById('batch-prev-page');
+            const nextBtn = document.getElementById('batch-next-page');
+
+            if (!tableBody) return;
+
+            const total = batchState.filteredPredictions.length;
+            const pageSize = batchState.pageSize;
+            const totalPages = Math.ceil(total / pageSize) || 1;
+
+            if (batchState.currentPage > totalPages) batchState.currentPage = totalPages;
+            if (batchState.currentPage < 1) batchState.currentPage = 1;
+
+            const startIdx = (batchState.currentPage - 1) * pageSize;
+            const endIdx = Math.min(startIdx + pageSize, total);
+            const pageItems = batchState.filteredPredictions.slice(startIdx, endIdx);
+
+            tableBody.innerHTML = '';
+            if (pageItems.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-on-surface-variant font-medium">No matching predictions found in preview sample.</td></tr>`;
+            } else {
+                pageItems.forEach((item, idx) => {
+                    const tr = document.createElement('tr');
+                    let badgeClass = "bg-amber-500/10 text-amber-400 border border-amber-500/30";
+                    if (item.sentiment === 'positive') badgeClass = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+                    if (item.sentiment === 'negative') badgeClass = "bg-rose-500/10 text-rose-400 border border-rose-500/30";
+
+                    tr.innerHTML = `
+                        <td class="p-3 font-mono text-on-surface-variant">${startIdx + idx + 1}</td>
+                        <td class="p-3 font-body text-on-background max-w-md truncate" title="${escapeHtml(item.text)}">${escapeHtml(item.text)}</td>
+                        <td class="p-3"><span class="px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] ${badgeClass}">${item.sentiment}</span></td>
+                        <td class="p-3 font-semibold font-mono text-indigo-400">${(item.confidence * 100).toFixed(1)}%</td>
+                        <td class="p-3 font-mono text-on-surface-variant">${item.latency_ms}ms</td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            }
+
+            if (paginationInfo) {
+                if (total === 0) {
+                    paginationInfo.innerText = "Showing 0 to 0 of 0 preview rows";
+                } else {
+                    paginationInfo.innerText = `Showing ${(startIdx + 1).toLocaleString()} to ${endIdx.toLocaleString()} of ${total.toLocaleString()} preview rows`;
+                }
+            }
+
+            if (pageIndicator) {
+                pageIndicator.innerText = `Page ${batchState.currentPage} of ${totalPages}`;
+            }
+
+            if (prevBtn) prevBtn.disabled = (batchState.currentPage <= 1);
+            if (nextBtn) nextBtn.disabled = (batchState.currentPage >= totalPages);
+        }
+
         async function processCSV(file) {
             if (!file.name.endsWith('.csv')) {
                 showToast("Please select a valid .csv file.", "warning");
@@ -1411,7 +1535,7 @@
 
             // Early warning for massive files (1M rows is typically 50MB - 150MB+)
             if (file.size > 35 * 1024 * 1024) {
-                showToast(`File size is ${(file.size / (1024 * 1024)).toFixed(1)}MB. Synchronous web upload is capped at 35MB / 50,000 rows to prevent browser timeouts. For 1 Million rows, use the offline streaming CLI: python src/batch_inference.py`, "warning", 10000);
+                showToast(`File size is ${(file.size / (1024 * 1024)).toFixed(1)}MB. Synchronous web upload is capped at 35MB / 100,000 rows to prevent browser timeouts. For 1 Million rows, use the offline streaming CLI: python src/batch_inference.py`, "warning", 10000);
                 return;
             }
 
@@ -1421,14 +1545,13 @@
             const progContainer = document.getElementById('batch-progress-container');
             const summaryCards = document.getElementById('batch-summary-cards');
             const tableContainer = document.getElementById('batch-results-table-container');
-            const tableBody = document.getElementById('batch-table-body');
 
             progContainer.classList.remove('hidden');
             document.getElementById('batch-file-name').innerText = file.name;
             document.getElementById('batch-progress-status').innerText = "Uploading & processing batch...";
 
             try {
-                // Extended timeout to 300s (5 min) to allow server to process up to 50,000 rows comfortably
+                // Extended timeout to 300s (5 min) to allow server to process up to 100,000 rows comfortably
                 const res = await fetchWithTimeout('/predict/batch', {
                     method: 'POST',
                     body: formData
@@ -1447,24 +1570,26 @@
                 document.getElementById('batch-neg-pct').innerText = `${data.negative_pct}%`;
                 summaryCards.classList.remove('hidden');
 
-                tableBody.innerHTML = '';
-                data.predictions.forEach((item, idx) => {
-                    const tr = document.createElement('tr');
-                    
-                    let badgeClass = "bg-amber-500/10 text-amber-400 border border-amber-500/30";
-                    if (item.sentiment === 'positive') badgeClass = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
-                    if (item.sentiment === 'negative') badgeClass = "bg-rose-500/10 text-rose-400 border border-rose-500/30";
+                // Update preview callout notice banner
+                const noticeBanner = document.getElementById('batch-preview-notice');
+                const noticeTotal = document.getElementById('batch-notice-total');
+                const noticePreview = document.getElementById('batch-notice-preview');
+                const tableSubtitle = document.getElementById('batch-table-subtitle');
+                const previewRowsCount = data.preview_count || (data.predictions ? data.predictions.length : 0);
 
-                    tr.innerHTML = `
-                        <td class="p-3 font-mono text-on-surface-variant">${idx + 1}</td>
-                        <td class="p-3 font-body text-on-background max-w-md truncate" title="${item.text}">${item.text}</td>
-                        <td class="p-3"><span class="px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] ${badgeClass}">${item.sentiment}</span></td>
-                        <td class="p-3 font-semibold font-mono text-indigo-400">${(item.confidence * 100).toFixed(1)}%</td>
-                        <td class="p-3 font-mono text-on-surface-variant">${item.latency_ms}ms</td>
-                    `;
-                    tableBody.appendChild(tr);
-                });
+                if (noticeTotal) noticeTotal.innerText = Number(data.total_rows).toLocaleString();
+                if (noticePreview) noticePreview.innerText = Number(previewRowsCount).toLocaleString();
+                if (tableSubtitle) tableSubtitle.innerText = `Showing preview of first ${Number(previewRowsCount).toLocaleString()} rows out of ${Number(data.total_rows).toLocaleString()} total analyzed rows`;
+                if (noticeBanner) noticeBanner.classList.remove('hidden');
 
+                // Populate pagination state & render first page
+                batchState.allPredictions = data.predictions || [];
+                batchState.filteredPredictions = data.predictions || [];
+                batchState.currentPage = 1;
+                const searchInput = document.getElementById('batch-search-input');
+                if (searchInput) searchInput.value = '';
+
+                renderBatchTablePage();
                 tableContainer.classList.remove('hidden');
 
                 // Store active dataset globally so dashboard graphs persist uploaded data
@@ -1851,6 +1976,7 @@
         // Initialize on load
         async function initApp() {
             initDashboardCharts();
+            initBatchPaginationControls();
             const isOnline = await checkHealth();
             if (isOnline) {
                 await Promise.allSettled([

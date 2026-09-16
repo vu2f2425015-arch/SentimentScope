@@ -37,7 +37,7 @@ MODELS_DIR = os.getenv("MODELS_DIR", "models")
 REPORTS_DIR = os.getenv("REPORTS_DIR", "reports")
 ENABLE_LIVE_INGESTION = os.getenv("ENABLE_LIVE_INGESTION", "true").lower() in ("true", "1", "yes")
 PUBLIC_DIR = "public"
-MAX_SYNC_BATCH_ROWS = int(os.getenv("MAX_SYNC_BATCH_ROWS", "10000"))
+MAX_SYNC_BATCH_ROWS = int(os.getenv("MAX_SYNC_BATCH_ROWS", "100000"))
 MAX_BATCH_FILE_BYTES = int(os.getenv("MAX_BATCH_FILE_BYTES", str(25 * 1024 * 1024)))
 
 # Global model state loaded on startup
@@ -295,6 +295,7 @@ class BatchSummary(BaseModel):
     negative_pct: float
     neutral_pct: float
     total_rows: int
+    preview_count: Optional[int] = None
     predictions: List[Dict[str, Any]]
     note: Optional[str] = None
 
@@ -591,6 +592,7 @@ async def predict_batch(file: UploadFile = File(...)):
             "negative_pct": 0.0,
             "neutral_pct": 0.0,
             "total_rows": 0,
+            "preview_count": 0,
             "predictions": [],
             "note": None
         }
@@ -610,8 +612,8 @@ async def predict_batch(file: UploadFile = File(...)):
             confidences = np.max(probs, axis=1)
             sentiments = [REVERSE_LABEL_MAP[int(l)] for l in pred_labels]
 
-            # Preview list capped at 200 rows to keep JSON payload lightweight for browser DOM
-            preview_limit = min(total, 200)
+            # Preview list capped at 1,000 rows to keep JSON payload lightweight for browser DOM
+            preview_limit = min(total, 1000)
             for i in range(preview_limit):
                 results.append({
                     "text": texts[i],
@@ -634,13 +636,13 @@ async def predict_batch(file: UploadFile = File(...)):
             for raw_text in texts:
                 res = run_inference(raw_text)
                 sentiments.append(res["sentiment"])
-                if len(results) < 200:
+                if len(results) < 1000:
                     results.append(res)
     else:
         for raw_text in texts:
             res = run_inference(raw_text)
             sentiments.append(res["sentiment"])
-            if len(results) < 200:
+            if len(results) < 1000:
                 results.append(res)
 
     pos_count = sentiments.count("positive")
@@ -650,13 +652,14 @@ async def predict_batch(file: UploadFile = File(...)):
     # Store first 100 sample predictions in rolling SQLite database
     insert_batch_predictions(source="batch_upload", predictions_list=results[:100])
 
-    note_msg = f"Showing preview of first {len(results)} rows. Summary metrics reflect all {total:,} rows." if total > len(results) else None
+    note_msg = f"Showing preview of first {len(results):,} rows. Summary metrics reflect all {total:,} rows." if total > len(results) else None
 
     return {
         "positive_pct": round((pos_count / total) * 100, 2),
         "negative_pct": round((neg_count / total) * 100, 2),
         "neutral_pct": round((neu_count / total) * 100, 2),
         "total_rows": total,
+        "preview_count": len(results),
         "predictions": results,
         "note": note_msg
     }

@@ -72,7 +72,7 @@ services:
       - key: INGESTION_DB_PATH
         value: data/rolling_store.db
       - key: MAX_SYNC_BATCH_ROWS
-        value: "50000"
+        value: "100000"
       - key: MAX_BATCH_FILE_BYTES
         value: "36700160"
       - key: ACTIVE_MODEL_TIER

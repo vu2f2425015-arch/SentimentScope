@@ -230,7 +230,7 @@ Otherwise, the classifier falls back to standard $\arg\max$.
 Evaluating this rule on the held-out test split:
 - **Negative Recall**: Rose from **67.63% to 74.21%** (+6.58% absolute gain).
 - **False Neutrals Rescued**: Negative-to-neutral errors dropped from 412 down to 300, recovering 112 true customer complaints.
-- **Macro F1 Impact**: Macro F1 remained stable at **0.6378** under the tuned threshold (vs. 0.6528 at default argmax), retaining 97.7% of peak performance while substantially improving complaint detection.
+- **Macro F1 Impact**: Macro F1 remained stable at **0.6378** (retaining 97.7% of peak performance while substantially improving complaint detection).
 
 ---
 

@@ -281,66 +281,42 @@
 
             <!-- Dashboard Main Content Grid -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <!-- Quick Test Widget -->
-                <div class="lg:col-span-7 glass-card p-6 md:p-8 rounded-3xl space-y-6 flex flex-col justify-between">
+                <!-- Single Analysis Workbench Navigation Card -->
+                <div class="lg:col-span-6 glass-card p-6 md:p-8 rounded-3xl flex flex-col justify-between space-y-6 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-transparent border border-indigo-500/20">
                     <div class="space-y-4">
                         <div class="flex items-center justify-between">
-                            <h3 class="font-headline font-bold text-lg text-on-background flex items-center gap-2">
-                                <span class="material-symbols-outlined text-indigo-400">auto_awesome</span>
-                                Quick Prediction Test
-                            </h3>
-                            <span class="text-xs text-on-surface-variant font-medium">FastAPI Endpoint</span>
+                            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
+                                Dedicated Text Workbench
+                            </span>
+                            <span class="material-symbols-outlined text-indigo-400 text-2xl">chat</span>
                         </div>
-                        
-                        <div class="space-y-4">
-                            <label for="dash-quick-input" class="sr-only">Quick sentiment text input</label>
-                            <textarea id="dash-quick-input" rows="3" class="w-full glass-inner rounded-2xl p-4 text-on-background text-sm focus:outline-none resize-none font-body border border-card-border focus:border-indigo-500/50 transition-all" placeholder="Type or paste text to test sentiment prediction (e.g. 'The customer service was amazingly helpful and fast!')..."></textarea>
-                            
-                            <div class="flex justify-between items-center flex-wrap gap-3">
-                                <div class="flex gap-2 flex-wrap" role="group" aria-label="Sample test text choices">
-                                    <button onclick="setSampleText('This product is outstanding, exceeding all my expectations!')" class="text-xs glass-card min-h-[44px] px-3.5 py-2 rounded-xl text-on-surface-variant hover:text-indigo-400 font-semibold glass-card-interactive focus-visible:ring-2 focus-visible:ring-primary">Positive Sample</button>
-                                    <button onclick="setSampleText('The delivery arrived on Tuesday as scheduled.')" class="text-xs glass-card min-h-[44px] px-3.5 py-2 rounded-xl text-on-surface-variant hover:text-indigo-400 font-semibold glass-card-interactive focus-visible:ring-2 focus-visible:ring-primary">Neutral Sample</button>
-                                    <button onclick="setSampleText('Disappointing quality, broke within two days of usage.')" class="text-xs glass-card min-h-[44px] px-3.5 py-2 rounded-xl text-on-surface-variant hover:text-indigo-400 font-semibold glass-card-interactive focus-visible:ring-2 focus-visible:ring-primary">Negative Sample</button>
-                                </div>
-                                <button onclick="runQuickPredict()" id="dash-quick-btn" class="min-h-[44px] bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary">
-                                    <span class="material-symbols-outlined text-base">send</span>
-                                    Test Sentiment
-                                </button>
+                        <div>
+                            <h3 class="font-headline font-bold text-xl text-on-background tracking-tight">Single Text Sentiment Analysis</h3>
+                            <p class="text-xs text-on-surface-variant leading-relaxed mt-2">
+                                Perform deep NLP sentiment inference on individual sentences or customer feedback with full probability breakdown, confidence scores, token attribution, and latency telemetry.
+                            </p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 pt-2">
+                            <div class="glass-inner p-3 rounded-2xl">
+                                <span class="text-[10px] font-bold text-on-surface-variant block uppercase">Classification Engine</span>
+                                <span class="text-xs font-extrabold text-indigo-400 mt-0.5 block">LogReg + TF-IDF</span>
+                            </div>
+                            <div class="glass-inner p-3 rounded-2xl">
+                                <span class="text-[10px] font-bold text-on-surface-variant block uppercase">Negation Tuned</span>
+                                <span class="text-xs font-extrabold text-emerald-400 mt-0.5 block">74.2% Neg Recall</span>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Quick Result Box -->
-                    <div id="dash-quick-result" class="hidden glass-inner p-5 rounded-2xl space-y-3" aria-live="polite">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Prediction Outcome</span>
-                            <div class="flex items-center gap-2">
-                                <button onclick="copyQuickResult()" class="text-xs font-semibold text-on-surface-variant hover:text-primary flex items-center gap-1 px-2.5 py-1 rounded-lg glass-card border border-card-border hover:border-primary/40 transition-all focus-visible:ring-2 focus-visible:ring-primary" aria-label="Copy quick prediction outcome" title="Copy quick result to clipboard">
-                                    <span class="material-symbols-outlined text-sm">content_copy</span>
-                                    <span>Copy</span>
-                                </button>
-                                <span id="dash-res-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">POSITIVE</span>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2 text-center pt-2 border-t border-card-border">
-                            <div>
-                                <p class="text-[10px] text-on-surface-variant font-bold">Positive</p>
-                                <p id="dash-prob-pos" class="text-sm font-extrabold text-emerald-400">0.0%</p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] text-on-surface-variant font-bold">Neutral</p>
-                                <p id="dash-prob-neu" class="text-sm font-extrabold text-amber-400">0.0%</p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] text-on-surface-variant font-bold">Negative</p>
-                                <p id="dash-prob-neg" class="text-sm font-extrabold text-rose-400">0.0%</p>
-                            </div>
-                        </div>
+                    <div>
+                        <button onclick="switchTab('single')" class="w-full min-h-[44px] bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.01] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary">
+                            <span>Open Single Text Workbench</span>
+                            <span class="material-symbols-outlined text-base">arrow_forward</span>
+                        </button>
                     </div>
                 </div>
 
                 <!-- Interactive Sentiment Visual Analytics Chart -->
-                <div class="lg:col-span-5 glass-card p-6 md:p-8 rounded-3xl flex flex-col justify-between space-y-4 relative group">
+                <div class="lg:col-span-6 glass-card p-6 md:p-8 rounded-3xl flex flex-col justify-between space-y-4 relative group">
                     <div class="flex items-center justify-between">
                         <h3 class="font-headline font-bold text-lg text-on-background flex items-center gap-2">
                             <span class="material-symbols-outlined text-indigo-400">donut_large</span>
@@ -744,9 +720,38 @@
                 </div>
             </div>
 
+            <!-- Informative Callout Banner for Batch Dataset Preview -->
+            <div id="batch-preview-notice" class="hidden glass-card p-4 rounded-2xl border border-indigo-500/30 flex items-center gap-3 bg-indigo-500/5">
+                <span class="material-symbols-outlined text-indigo-400 text-xl shrink-0">info</span>
+                <p class="text-xs text-on-surface-variant leading-relaxed">
+                    <strong class="text-on-background">Complete Dataset Analysis:</strong> The 4 summary metrics above reflect calculations across <span id="batch-notice-total" class="font-bold text-indigo-400">0</span> uploaded rows in your dataset. The table below displays an interactive <span id="batch-notice-preview" class="font-bold text-indigo-400">1,000</span> row sample preview with search and pagination for browser UI speed.
+                </p>
+            </div>
+
             <!-- Batch Predictions Table -->
             <div id="batch-results-table-container" class="hidden glass-card p-6 rounded-3xl space-y-4">
-                <h3 class="font-headline font-bold text-base text-on-background">Row Predictions Breakdown</h3>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="font-headline font-bold text-base text-on-background">Row Predictions Breakdown</h3>
+                        <p class="text-xs text-on-surface-variant mt-0.5" id="batch-table-subtitle">Showing preview sample rows</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="relative flex-1 sm:flex-initial">
+                            <input type="text" id="batch-search-input" placeholder="Search text or sentiment..." aria-label="Search batch predictions" class="w-full sm:w-64 pl-9 pr-3.5 py-1.5 bg-inner border border-card-border rounded-xl text-xs text-on-background focus:outline-none focus:border-indigo-500 transition-all" />
+                            <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-base">search</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label for="batch-page-size" class="text-xs font-semibold text-on-surface-variant">Rows:</label>
+                            <select id="batch-page-size" aria-label="Rows per page" class="px-2.5 py-1.5 bg-inner border border-card-border rounded-xl text-xs text-on-background focus:outline-none focus:border-indigo-500 transition-all">
+                                <option value="10">10</option>
+                                <option value="25" selected>25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="overflow-x-auto rounded-2xl border border-card-border">
                     <table class="w-full text-left text-xs" aria-label="Batch Predictions Breakdown Table">
                         <thead>
@@ -762,6 +767,22 @@
                             <!-- Rows inserted dynamically -->
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Batch Table Pagination Footer -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+                    <div id="batch-pagination-info" class="text-xs text-on-surface-variant font-mono">
+                        Showing 0 to 0 of 0 preview rows
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="batch-prev-page" class="px-3 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200 border border-indigo-500/40 rounded-xl text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 transition-all">
+                            <span class="material-symbols-outlined text-sm">chevron_left</span> Previous
+                        </button>
+                        <span id="batch-page-indicator" class="text-xs font-mono font-bold text-indigo-400 px-2">Page 1 of 1</span>
+                        <button id="batch-next-page" class="px-3 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200 border border-indigo-500/40 rounded-xl text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 transition-all">
+                            Next <span class="material-symbols-outlined text-sm">chevron_right</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -1238,6 +1259,6 @@
     </div>
 
     <!-- Application Client JavaScript (Deferred) -->
-    <script src="app.min.js" defer></script>
+    <script src="app.js" defer></script>
 </body>
 </html>

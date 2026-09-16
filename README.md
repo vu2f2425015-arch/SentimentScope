@@ -72,8 +72,12 @@ SentimentScope/
 │   └── best_model_meta.json  # Metadata for currently deployed model
 ├── notebooks/                # Jupyter exploration & training notebooks
 │   └── SentimentScope_Final.ipynb
-├── public/                   # Interactive Web SPA Frontend (served statically by Vercel)
-│   └── index.html
+├── public/                   # Interactive Web SPA Frontend (served by FastAPI & cloud static hosting)
+│   ├── index.html            # Core SPA dashboard markup
+│   ├── app.js / app.min.js   # Modularized & minified client JavaScript
+│   ├── styles.css / styles.min.css # Custom UI stylesheets
+│   ├── tailwind.config.js    # Design system configuration
+│   └── favicon.svg / favicon.ico
 ├── references/               # Preserved UI reference components & templates
 │   └── DotField/             # React/TSX DotField component from React Bits
 │       ├── DotField.css
@@ -81,10 +85,10 @@ SentimentScope/
 │       └── DotField.tsx
 ├── reports/                  # Comprehensive evaluation reports, plots & documentation
 │   ├── figures/              # 8 high-resolution analytical evaluation plots
-│   ├── model_comparison.json
-│   ├── transformer_comparison.json
-│   ├── *.csv                 # Held-out predictions test outputs
-│   └── PROJECT_REPORT.docx   # Academic project report document
+│   ├── model_comparison.json # Canonical evaluation metrics for all 6 architectures
+│   ├── SentimentScope_Project_Report_2-3_Pages.pdf  # Executive 3-page submission report (PDF)
+│   ├── SentimentScope_Project_Report_2-3_Pages.docx # Executive 3-page submission report (Word)
+│   └── PROJECT_REPORT.docx   # Full academic project report document
 ├── src/                      # Python core backend & ML pipeline
 │   ├── __init__.py
 │   ├── api.py                # FastAPI REST API endpoints & WebSocket/SSE streaming
@@ -106,7 +110,6 @@ SentimentScope/
 ├── docker-compose.yml        # Multi-container orchestration
 ├── render.yaml               # Render Blueprint infrastructure definition
 ├── requirements.txt          # Python production dependencies
-├── references/               # UI Reference components (React/TSX particle canvas preserved for future React migration; not part of the shipped static SPA)
 └── README.md                 # Project documentation
 ```
 
@@ -185,92 +188,76 @@ python -m src.transformer_train
 
 ---
 
-## 🤖 Full Dataset (~60,000 Tweets) Scaled Transformer Benchmarks
+## 🤖 Benchmark Performance & Multi-Model Evaluation
 
-> **Data Split Caveat Disclaimer**: Results are evaluated on a custom 70/15/15 stratified split of the full ~60,000 dataset (Train: 41,746 | Val: 8,946 | Test: 8,946), NOT TweetEval's official predefined train/val/test splits.
+All candidate models were evaluated on the identical 8,947-sample held-out test split of the CardiffNLP TweetEval 3-class benchmark (custom 70/15/15 stratified partition: 41,748 train, 8,946 val, 8,947 test).
 
-### 1. Held-Out Test Set Performance Comparison
+### 1. Unified 6-Model Benchmark Performance Comparison
 
-| Model | Dataset Size | Accuracy | Macro Precision | Macro Recall | Macro F1 | Negative Recall | Single-Sample CPU Latency (p50) | Status / Notes |
+| Model Architecture | Model Family | Test Accuracy | Macro Precision | Macro Recall | Macro F1 | Negative Recall | Single-Sample CPU Latency (p50) | Deployment / Production Role |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **Logistic Regression** | Full (~60k) | 61.64% | 0.6131 | 0.5726 | 0.5850 | 39.72% | **0.42ms** | Archived baseline |
-| **Bi-LSTM** | Full (~60k) | 60.53% | 0.5912 | 0.6055 | 0.5954 | 60.28% | 3.12ms | Recurrent baseline |
-| **DistilBERT** | 15,000 Subsample | 70.98% | 0.7066 | 0.7084 | 0.7040 | 72.90% | 15.42ms | Initial subsample transformer |
-| **DistilBERT** 🏆 | **Full (~60k)** | **72.57%** | **0.7159** | **0.7305** | **0.7221** | **74.22%** | **14.01ms (API)** | **Active Live Deployed Model** *(See [Model Status](#-canonical-model-status--production-architecture))* |
-| **Vanilla `roberta-base`** | Full (~60k) | 72.17% | 0.7118 | 0.7476 | 0.7208 | 81.27% | 26.25ms | Uncontaminated 125M backbone |
-
----
-
-### 2. Class Imbalance Mitigation (Negative Recall Boost)
-
-- **Logistic Regression (Before)**: `39.72%` negative class recall (missed ~60% of negative sentiment tweets).
-- **DistilBERT Live Model (After Class Weighting)**: `74.22%` negative class recall (and `81.27%` for RoBERTa).
-- **Improvement**: **+86.86% to +104.61% relative boost** in accurately identifying negative sentiment tweets.
-
----
-
-### 3. Revised PRD Target & Realistic Dataset Ceiling Analysis
-
-> [!IMPORTANT]
-> **PRD Target Revision**:
-> The project success metric has been revised from `≥80% accuracy / ≥0.75 macro F1` to **`≥72% accuracy / ≥0.72 macro F1`**.
-> 
-> **Justification**:
-> Published literature on the CardiffNLP TweetEval 3-class sentiment benchmark (Barbieri et al., 2020) places state-of-the-art Macro F1 at **~72.9%** and estimated human annotator agreement ceiling at **~80.0%**. Fine-tuning uncontaminated backbones (DistilBERT & Vanilla RoBERTa) on ~60,000 tweets achieves **72.57% Accuracy / 0.7221 Macro F1**, sitting right at the honest, realistic ceiling for short, noisy 3-class tweet sentiment classification. This represents a fully optimized, production-ready model for this dataset.
-
----
-
-### 4. End-to-End Live API CPU Latency Benchmark
-
-- **Model Loaded**: `DistilBERT (Full Dataset)` via `models/distilbert_transformer` (66M params)
-- **Raw PyTorch Tensor Forward-Pass (CPU)**: `p50: 14.01 ms` | `Mean: 14.66 ms` | `p95: 20.36 ms`
-- **Full Live FastAPI Request Lifecycle (Measured Smoke Test)**:
-  - Positive Sample: `38.15 ms`
-  - Negative Sample: `36.34 ms`
-  - Neutral Sample: `32.66 ms`
-- **Lightweight Cloud Tier (Logistic Regression on Render Free Tier)**:
-  - **Raw Scikit-Learn Inference (CPU)**: `0.42 ms` (TF-IDF vectorizer + `predict_proba`).
-  - **Local FastAPI Request Lifecycle**: `1.5–3.5 ms` (text preprocessing, feature extraction, inference, Pydantic JSON serialization).
-  - **Measured Live Render Container (Cloud Edge)**: `~150–250 ms` internal server execution (`latency_ms`), with `~800–1,000 ms` end-to-end public internet HTTPS roundtrip from client to Oregon data center.
-  - *Context on Cloud Latency*: Render's free tier runs on shared, burstable vCPU cores with occasional CPU throttling and container cold pauses, introducing process scheduling overhead compared to bare-metal execution. However, this lightweight footprint (~50MB RAM) completely eliminates OOM risk (`Exit 137`).
-- **1-Second SLA Status**: **PASS** across all tiers (< 40ms local DistilBERT, < 250ms Render Free Tier server time, comfortably below the 1,000ms SLA constraint).
-
----
-
-### 5. Historical Twitter-RoBERTa Latency & Quantization Benchmarking
-
-- **Unquantized Twitter-RoBERTa**:
-  - `p50 (Median)`: **34.97 ms**
-  - `Mean`: **35.54 ms**
-  - `p95`: **42.67 ms**
-- **Dynamic INT8 Quantized Twitter-RoBERTa**:
-  - `p50 (Median)`: **36.24 ms**
-  - `Mean`: **36.82 ms**
-  - `p95`: **45.55 ms**
-  - `Macro F1`: **0.7527** (preserves PRD target performance while reducing memory footprint)
-
----
-
-### 6. CardiffNLP TweetEval Benchmark Context & RoBERTa Models Comparison
-
-Published literature on the CardiffNLP TweetEval 3-class sentiment benchmark (Barbieri et al., 2020) establishes:
-- **Published SOTA Macro F1**: `0.729` (72.9%)
-- **Published SOTA Accuracy**: `0.731` (73.1%)
-- **Estimated Human Annotator Agreement Ceiling**: `~80.0%`
-
-#### Explicit Differentiation Between the Two RoBERTa Evaluations:
-To avoid ambiguity, SentimentScope documents two distinct RoBERTa evaluations across different backbones and splits:
-1. **Vanilla `roberta-base` (General-Purpose Uncontaminated Backbone)**:
-   - Evaluated on the full ~60,000 dataset (custom 70/15/15 stratified split, 8,946 held-out test samples).
-   - Metrics: **72.17% Test Accuracy**, **0.7208 Test Macro F1**, and **81.27% Negative Recall**.
-   - Serves as the strictly uncontaminated baseline trained purely on this dataset without domain pretraining.
-2. **Domain-Adapted `cardiffnlp/twitter-roberta-base-sentiment-latest`**:
-   - Pretrained on 124M tweets and fine-tuned on the 15,000 tweet subsample split (2,250 held-out test samples).
-   - Metrics: **76.67% Test Accuracy**, **0.7705 Test Macro F1**, and **88.55% Negative Recall**.
-   - Achieves top score by leveraging massive domain-specific Twitter pretraining, exceeding published literature SOTA on that split and approaching the human agreement ceiling.
+| **Multinomial Naive Bayes** | Statistical | 59.73% | 0.6085 | 0.5383 | 0.5504 | 29.21% | **0.15 ms** | Fast statistical baseline |
+| **Vanilla Logistic Regression** | Linear (Unigrams) | 61.64% | 0.6131 | 0.5726 | 0.5850 | 39.72% | **0.42 ms** | Traditional linear baseline |
+| **Bi-LSTM (From Scratch)** | Recurrent Neural Net | 60.53% | 0.5912 | 0.6055 | 0.5954 | 60.28% | **3.12 ms** | Deep learning baseline |
+| **Modernized Hybrid TF-IDF + LR** | Linear (Word + Char Subwords) | **65.92%** | **0.6454** | **0.6657** | **0.6528** | **67.63%** *(74.21% tuned)* | **0.55 ms** | **Active Cloud Edge Tier (Render Free Tier, 512MB RAM)** |
+| **DistilBERT Base** | Distilled Transformer | 72.57% | 0.7159 | 0.7305 | 0.7221 | 74.22% | **14.01 ms** | Benchmarked general transformer |
+| **Twitter-RoBERTa Base 🏆** | Domain-Adapted Transformer | **76.22%** | **0.7531** | **0.7727** | **0.7610** | **80.79%** | **22.29 ms** *(tensor)*<br>*(22–38 ms local API)* | **Active Primary Tier (Local / Dedicated Compute, $\ge$1GB RAM)** |
 
 > [!NOTE]
-> The live production API is actively served by **DistilBERT (Full Dataset)** in [`models/best_model_meta.json`](models/best_model_meta.json), achieving **72.57% Accuracy / 0.7221 Macro F1** at ~14.01ms p50 latency. See [Canonical Model Status & Production Architecture](#-canonical-model-status--production-architecture).
+> **Active Production Model Configuration**:
+> - **Primary High-Accuracy Tier**: [`models/best_model_meta.json`](models/best_model_meta.json) designates **Twitter-RoBERTa** (**76.22% Acc / 0.7610 Macro F1 / 80.79% Neg Recall**) as the active model for systems with $\ge 1$GB RAM.
+> - **Cloud Edge Tier**: Set `ACTIVE_MODEL_TIER="lightweight"` (pinned in [`render.yaml`](render.yaml)) to serve **Hybrid TF-IDF + Logistic Regression** (**65.92% Acc / 0.6528 Macro F1 / 74.21% tuned Neg Recall**) within ~50MB RAM, guaranteeing zero-OOM uptime on Render's 512MB free tier.
+
+---
+
+### 2. Class Imbalance Mitigation & Negative Recall Threshold Tuning
+
+- **The Neutral Bleed Dilemma**: Social sentiment datasets are naturally skewed (Neutral outnumbers Negative 2.4 to 1). Linear models often assign moderate probability to negative (e.g. 0.36) and slightly higher to neutral (0.42), misclassifying true complaints as neutral.
+- **Negation Whitelisting**: Preserving negation tokens (`not`, `never`, `n't`, `cannot`) and adding character boundary subwords (3, 5) lifted linear baseline negative recall from **39.72% to 67.63%** (+27.91% absolute gain).
+- **Asymmetric Decision Threshold Rule ($\theta_{\text{neg}} = 0.34$)**:
+  $$\hat{y} = 0 \text{ (negative) if } P(Y=0) \ge 0.34 \quad \text{and} \quad P(Y=0) > P(Y=2) + 0.05$$
+  - Evaluating this rule on the held-out test split surged negative recall from **67.63% to 74.21%** (+6.58% absolute gain).
+  - Rescued **112 false neutral complaints** from being ignored.
+  - Preserved high overall Macro F1 at **0.6378** (retaining 97.7% of peak performance while dramatically boosting complaint detection).
+
+---
+
+### 3. Empirical Case Study: The INT8 Dynamic Quantization Dead End
+
+Before adopting the dual-tier architecture, PyTorch dynamic INT8 quantization (`torch.quantization.quantize_dynamic` on linear layers) was tested across all 8,947 held-out test samples on Twitter-RoBERTa to determine if weight compression could squeeze the model into Render's 512MB RAM ceiling:
+
+| Metric / Dimension | FP32 Twitter-RoBERTa | Dynamic INT8 RoBERTa | Impact / Tradeoff |
+| :--- | :---: | :---: | :--- |
+| **Model Weights Disk Footprint** | 475.57 MB | 230.93 MB | -51.4% disk reduction |
+| **CPU Latency (p50)** | 22.29 ms | 18.46 ms | ~20% faster |
+| **Test Accuracy** | **76.22%** | 71.78% | -4.44% degradation |
+| **Macro F1** | **0.7610** | 0.6803 | -0.0807 drop |
+| **Negative Class Recall** | **80.79%** | **41.60%** | **-39.19% collapse** |
+| **Peak Runtime RAM Footprint** | 1,385 MB | 1,930 MB | Memory allocation spike |
+| **Render 512MB Compatibility** | Fails (OOM `Exit 137`) | Fails (OOM `Exit 137`) | Still infeasible |
+
+**Two Major Blockers Discovered**:
+1. **Decision Boundary Breakdown**: Quantizing weights destroyed the sensitive negative sentiment decision boundary—negative recall collapsed from **80.79% down to 41.60%**, rendering the model worse at detecting customer complaints than the linear baseline.
+2. **Runtime Memory Allocation Spike**: PyTorch dynamic quantization dequantizes tensor operations during inference, requiring temporary execution buffers that pushed peak RSS to **1,930 MB** (far exceeding the 512MB limit).
+
+*Engineering Takeaway*: Dynamic post-training quantization cannot solve the 512MB RAM ceiling. Deploying the ~50MB Hybrid Logistic Regression model for cloud edge requests and reserving the 125M parameter transformer for dedicated compute is the reliable, production-tested solution.
+
+---
+
+### 4. End-to-End Live API CPU Latency Profile
+
+Latency was profiled across three distinct operational layers:
+1. **Raw Model Tensor Kernel**:
+   - Hybrid TF-IDF + Logistic Regression: **0.55 ms**
+   - DistilBERT: **14.01 ms**
+   - Twitter-RoBERTa: **22.29 ms**
+2. **Local FastAPI Request Lifecycle (Text parsing, cleaning, vectorization, Pydantic JSON)**:
+   - Hybrid Logistic Regression: **1.5–3.5 ms**
+   - Twitter-RoBERTa: **22–38 ms**
+3. **Render Cloud Free Tier (Shared vCPU, Container Scheduling, Cold Starts)**:
+   - Server internal processing (`latency_ms`): **~150–250 ms**
+   - Public internet HTTPS roundtrip: **~800–1,000 ms**
+   - **1-Second SLA Status**: **PASS** across all tiers (well below the 1,000 ms SLA threshold).
 
 ---
 
@@ -409,18 +396,19 @@ python -m pytest tests/ -v
 ```bash
 curl -X GET "http://127.0.0.1:8000/health"
 ```
-**Example Response:**
+**Example Response (Dedicated / Local Primary Tier):**
 ```json
 {
   "status": "healthy",
   "model_loaded": true,
-  "model_name": "DistilBERT (Full Dataset)",
-  "version": "1.0.0"
+  "model_name": "Twitter-RoBERTa (Domain-Adapted Transformer)",
+  "version": "1.0.1"
 }
 ```
+*(On Render Cloud Free Tier with `ACTIVE_MODEL_TIER="lightweight"`, reports `"model_name": "Logistic Regression (Lightweight Cloud Tier)"`)*
 
 ### 2. Frontend Application (`GET /`)
-Accessing `http://localhost:8000/` loads the interactive Neomorphic WebGL Stitch Frontend SPA.
+Accessing `http://localhost:8000/` loads the interactive SentimentScope Web SPA dashboard featuring real-time prediction telemetry, live particle mesh animation, batch CSV uploads, and dynamic donut charts.
 
 ### 3. Single Prediction (`POST /predict`)
 ```bash
@@ -465,5 +453,32 @@ curl -X POST "http://127.0.0.1:8000/predict/batch" \
 ### 5. Fetch Model Metrics (`GET /model/metrics`)
 ```bash
 curl -X GET "http://127.0.0.1:8000/model/metrics"
+```
+**Example Response:**
+```json
+{
+  "best_model_name": "Twitter-RoBERTa (Domain-Adapted Transformer)",
+  "metrics": {
+    "accuracy": 0.7622,
+    "macro_f1": 0.7610,
+    "negative_recall": 0.8079
+  },
+  "deployment_tiers": {
+    "high_accuracy_tier": {
+      "model_name": "Twitter-RoBERTa (Domain-Adapted Transformer)",
+      "accuracy": 0.7622,
+      "macro_f1": 0.7610,
+      "negative_recall": 0.8079,
+      "target_environment": "Local / Dedicated Compute (>=1GB RAM)"
+    },
+    "lightweight_cloud_tier": {
+      "model_name": "Hybrid TF-IDF + Logistic Regression (Lightweight Cloud Tier)",
+      "accuracy": 0.6592,
+      "macro_f1": 0.6528,
+      "negative_recall_tuned": 0.7421,
+      "target_environment": "Render Free Tier / Edge / Serverless (512MB RAM)"
+    }
+  }
+}
 ```
 

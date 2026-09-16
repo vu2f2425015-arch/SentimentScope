@@ -66,6 +66,7 @@ def test_predict_batch_happy_path():
         assert "negative_pct" in data
         assert "neutral_pct" in data
         assert data["total_rows"] == 3
+        assert data["preview_count"] == 3
         assert len(data["predictions"]) == 3
 
 
