@@ -281,36 +281,45 @@
 
             <!-- Dashboard Main Content Grid -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <!-- Single Analysis Workbench Navigation Card -->
+                <!-- Model Specs & Performance Card -->
                 <div class="lg:col-span-6 glass-card p-6 md:p-8 rounded-3xl flex flex-col justify-between space-y-6 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-transparent border border-indigo-500/20">
                     <div class="space-y-4">
                         <div class="flex items-center justify-between">
-                            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
-                                Dedicated Text Workbench
+                            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
+                                Active Pipeline Specs
                             </span>
-                            <span class="material-symbols-outlined text-indigo-400 text-2xl">chat</span>
+                            <span class="material-symbols-outlined text-indigo-400 text-2xl">psychology</span>
                         </div>
                         <div>
-                            <h3 class="font-headline font-bold text-xl text-on-background tracking-tight">Single Text Sentiment Analysis</h3>
-                            <p class="text-xs text-on-surface-variant leading-relaxed mt-2">
-                                Perform deep NLP sentiment inference on individual sentences or customer feedback with full probability breakdown, confidence scores, token attribution, and latency telemetry.
+                            <h3 class="font-headline font-bold text-xl text-on-background tracking-tight">NLP Classification Engine</h3>
+                            <p class="text-xs text-on-surface-variant leading-relaxed mt-1">
+                                Modernized Hybrid TF-IDF + Logistic Regression with word n-grams (1,2), subword char n-grams (3,5), and negation contraction expansion.
                             </p>
                         </div>
-                        <div class="grid grid-cols-2 gap-3 pt-2">
-                            <div class="glass-inner p-3 rounded-2xl">
-                                <span class="text-[10px] font-bold text-on-surface-variant block uppercase">Classification Engine</span>
-                                <span class="text-xs font-extrabold text-indigo-400 mt-0.5 block">LogReg + TF-IDF</span>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                            <div class="glass-inner p-3 rounded-2xl text-center">
+                                <span class="text-[10px] font-bold text-on-surface-variant block uppercase tracking-wider">Accuracy</span>
+                                <span class="text-base font-extrabold text-on-background mt-0.5 block">65.9%</span>
                             </div>
-                            <div class="glass-inner p-3 rounded-2xl">
-                                <span class="text-[10px] font-bold text-on-surface-variant block uppercase">Negation Tuned</span>
-                                <span class="text-xs font-extrabold text-emerald-400 mt-0.5 block">74.2% Neg Recall</span>
+                            <div class="glass-inner p-3 rounded-2xl text-center">
+                                <span class="text-[10px] font-bold text-on-surface-variant block uppercase tracking-wider">Macro F1</span>
+                                <span class="text-base font-extrabold text-indigo-400 mt-0.5 block">0.6528</span>
+                            </div>
+                            <div class="glass-inner p-3 rounded-2xl text-center">
+                                <span class="text-[10px] font-bold text-on-surface-variant block uppercase tracking-wider">Neg Recall</span>
+                                <span class="text-base font-extrabold text-emerald-400 mt-0.5 block">74.2%</span>
+                            </div>
+                            <div class="glass-inner p-3 rounded-2xl text-center">
+                                <span class="text-[10px] font-bold text-on-surface-variant block uppercase tracking-wider">Kernel Latency</span>
+                                <span class="text-base font-extrabold text-purple-400 mt-0.5 block">0.55ms</span>
                             </div>
                         </div>
                     </div>
                     <div>
-                        <button onclick="switchTab('single')" class="w-full min-h-[44px] bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.01] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary">
-                            <span>Open Single Text Workbench</span>
-                            <span class="material-symbols-outlined text-base">arrow_forward</span>
+                        <button onclick="switchTab('performance')" class="w-full min-h-[44px] bg-gradient-to-r from-indigo-500/20 to-purple-500/20 hover:from-indigo-500/30 hover:to-purple-500/30 text-indigo-200 font-bold px-6 py-3 rounded-xl border border-indigo-500/40 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary">
+                            <span>View Model Performance Matrix</span>
+                            <span class="material-symbols-outlined text-base">analytics</span>
                         </button>
                     </div>
                 </div>
