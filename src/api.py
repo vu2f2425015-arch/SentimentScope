@@ -10,6 +10,7 @@ from typing import Dict, Any, List, Optional
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
@@ -24,7 +25,7 @@ except ImportError:
     torch = None
 
 from src.data_loader import REVERSE_LABEL_MAP
-from src.db import init_db, insert_batch_predictions, get_recent_predictions, get_rolling_stats
+from src.db import init_db, insert_batch_predictions, get_recent_predictions, get_rolling_stats, close_db_connection
 from src.live_ingestion import (
     process_live_ingestion,
     background_ingestion_loop,
@@ -228,6 +229,7 @@ async def lifespan(app: FastAPI):
         stop_background_scheduler()
         ingestion_task.cancel()
         
+    close_db_connection()
     model_state.clear()
 
 
@@ -265,6 +267,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Mount static files for same-origin frontend serving
 if os.path.exists(PUBLIC_DIR):
@@ -660,12 +664,14 @@ async def predict_batch(file: UploadFile = File(...)):
 
 @app.get("/live/feed")
 @app.get("/api/live/feed")
-def get_live_feed(limit: int = 50, source: Optional[str] = "live"):
+def get_live_feed(limit: int = 50, offset: int = 0, source: Optional[str] = "live"):
     """
-    Returns recent predictions from the rolling SQLite store.
+    Returns recent predictions from the rolling SQLite store with pagination support.
     Defaults to source='live' so batch uploads don't clutter the live feed.
     """
-    return get_recent_predictions(limit=min(limit, 200), source=source)
+    safe_limit = max(1, min(limit, 200))
+    safe_offset = max(0, offset)
+    return get_recent_predictions(limit=safe_limit, offset=safe_offset, source=source)
 
 
 @app.get("/live/stats")
@@ -762,6 +768,17 @@ def get_model_metrics():
                     response[key] = c_data[key]
 
     return response
+
+
+@app.get("/{filename:path}", include_in_schema=False)
+def serve_public_file(filename: str):
+    """
+    Fallback handler to serve static assets directly from public/ if requested.
+    """
+    file_path = os.path.join(PUBLIC_DIR, filename)
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="Not Found")
 
 
 if __name__ == "__main__":

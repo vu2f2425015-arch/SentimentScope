@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="50%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#090d16" />
+    </linearGradient>
+    <linearGradient id="node1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#4f46e5" />
+    </linearGradient>
+    <linearGradient id="node2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc" />
+      <stop offset="100%" stop-color="#9333ea" />
+    </linearGradient>
+    <linearGradient id="node3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f472b6" />
+      <stop offset="100%" stop-color="#db2777" />
+    </linearGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="50%" stop-color="#a855f7" />
+      <stop offset="100%" stop-color="#ec4899" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer Rounded Container -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#bgGrad)" stroke="url(#borderGrad)" stroke-width="2" />
+  
+  <!-- Interconnecting faint data arcs -->
+  <path d="M25 40 L39 22 M39 22 L45 41 M25 40 L45 41" stroke="#a855f7" stroke-width="1.8" stroke-dasharray="2 2" stroke-opacity="0.5" />
+  
+  <!-- Node 1: Main Sentiment Sphere (Bottom Left) -->
+  <circle cx="25" cy="40" r="11" fill="url(#node1)" />
+  <circle cx="22" cy="37" r="3.5" fill="#ffffff" opacity="0.45" />
+  
+  <!-- Node 2: Primary Classification Sphere (Top Right) -->
+  <circle cx="39" cy="22" r="9" fill="url(#node2)" />
+  <circle cx="36.5" cy="19.5" r="2.8" fill="#ffffff" opacity="0.45" />
+
+  <!-- Node 3: Telemetry Pulse Sphere (Bottom Right) -->
+  <circle cx="45" cy="41" r="7" fill="url(#node3)" />
+  <circle cx="43" cy="39" r="2" fill="#ffffff" opacity="0.45" />
+</svg>

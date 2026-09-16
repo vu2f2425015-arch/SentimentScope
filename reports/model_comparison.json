@@ -82,43 +82,43 @@
       "cv_f1_std": 0.0036
     },
     "Logistic Regression": {
-      "accuracy": 0.6667,
-      "precision_macro": 0.6661,
-      "recall_macro": 0.6331,
-      "macro_f1": 0.6451,
-      "brier_score": 0.4481,
+      "accuracy": 0.6592,
+      "precision_macro": 0.6454,
+      "recall_macro": 0.6657,
+      "macro_f1": 0.6528,
+      "brier_score": 0.4499,
       "confusion_matrix": [
         [
-          849,
-          691,
-          162
+          1151,
+          412,
+          139
         ],
         [
-          375,
-          3055,
-          669
+          739,
+          2545,
+          815
         ],
         [
-          104,
-          981,
-          2061
+          199,
+          745,
+          2202
         ]
       ],
       "class_metrics": {
         "negative": {
-          "precision": 0.6393,
-          "recall": 0.4988,
-          "f1": 0.5604
+          "precision": 0.6434,
+          "recall": 0.6763,
+          "f1": 0.6072
         },
         "neutral": {
-          "precision": 0.6463,
-          "recall": 0.7453,
-          "f1": 0.6923
+          "precision": 0.6875,
+          "recall": 0.6525,
+          "f1": 0.6525
         },
         "positive": {
-          "precision": 0.7127,
-          "recall": 0.6551,
-          "f1": 0.6827
+          "precision": 0.7011,
+          "recall": 0.6988,
+          "f1": 0.6988
         }
       },
       "cv_f1_mean": 0.6337,
@@ -166,6 +166,49 @@
       },
       "cv_f1_mean": 0.6156,
       "cv_f1_std": 0.0057
+    },
+    "Twitter-RoBERTa": {
+      "accuracy": 0.7622,
+      "precision_macro": 0.7531,
+      "recall_macro": 0.7727,
+      "macro_f1": 0.7610,
+      "brier_score": 0.3272,
+      "confusion_matrix": [
+        [
+          1375,
+          293,
+          34
+        ],
+        [
+          579,
+          2978,
+          542
+        ],
+        [
+          55,
+          625,
+          2466
+        ]
+      ],
+      "class_metrics": {
+        "negative": {
+          "precision": 0.6844,
+          "recall": 0.8079,
+          "f1": 0.7410
+        },
+        "neutral": {
+          "precision": 0.7644,
+          "recall": 0.7265,
+          "f1": 0.7450
+        },
+        "positive": {
+          "precision": 0.8107,
+          "recall": 0.7839,
+          "f1": 0.7970
+        }
+      },
+      "cv_f1_mean": 0.7580,
+      "cv_f1_std": 0.0045
     }
   }
 }

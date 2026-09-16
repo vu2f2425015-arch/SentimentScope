@@ -1,5 +1,5 @@
 import os
-import requests
+import httpx
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -29,8 +29,8 @@ def fetch_tweeteval_benchmark_dataset() -> pd.DataFrame:
     
     for text_file, label_file in splits:
         try:
-            r_text = requests.get(base_url + text_file, headers=headers, timeout=30)
-            r_label = requests.get(base_url + label_file, headers=headers, timeout=30)
+            r_text = httpx.get(base_url + text_file, headers=headers, timeout=30.0, follow_redirects=True)
+            r_label = httpx.get(base_url + label_file, headers=headers, timeout=30.0, follow_redirects=True)
             
             texts = r_text.text.splitlines()
             labels = [int(x.strip()) for x in r_label.text.splitlines() if x.strip() != ""]

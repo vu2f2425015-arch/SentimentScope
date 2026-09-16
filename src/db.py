@@ -1,6 +1,9 @@
 import os
 import json
 import sqlite3
+import time
+import threading
+from functools import lru_cache
 from typing import Dict, Any, List, Optional
 
 DEFAULT_DB_PATH = os.getenv("INGESTION_DB_PATH", os.path.join("data", "rolling_store.db"))
@@ -9,28 +12,69 @@ DEFAULT_MAX_ROWS = int(os.getenv("INGESTION_MAX_ROWS", "5000"))
 # Global telemetry counter for last pruning operation
 _rows_pruned_last_cycle = 0
 
+# Reusable shared connection and thread lock
+_shared_connection: Optional[sqlite3.Connection] = None
+_db_lock = threading.RLock()
+
 
 def get_db_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
     """
-    Creates and returns a SQLite connection configured with WAL mode and busy timeout.
+    Returns a thread-safe reused SQLite connection configured with WAL mode and busy timeout.
+    If a custom db_path is provided (e.g. during isolated unit tests), opens a dedicated connection.
     """
+    global _shared_connection
     target_path = db_path or DEFAULT_DB_PATH
-    try:
-        os.makedirs(os.path.dirname(os.path.abspath(target_path)), exist_ok=True)
-    except Exception:
-        pass
-    
-    conn = sqlite3.connect(target_path, timeout=10.0, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    try:
-        conn.execute("PRAGMA journal_mode=WAL;")
-    except Exception:
-        pass
-    try:
-        conn.execute("PRAGMA busy_timeout=5000;")
-    except Exception:
-        pass
-    return conn
+
+    # For custom paths (e.g. unit tests with temp directories), return dedicated connection
+    if db_path is not None and os.path.abspath(db_path) != os.path.abspath(DEFAULT_DB_PATH):
+        try:
+            os.makedirs(os.path.dirname(os.path.abspath(target_path)), exist_ok=True)
+        except Exception:
+            pass
+        conn = sqlite3.connect(target_path, timeout=10.0, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            conn.execute("PRAGMA journal_mode=WAL;")
+        except Exception:
+            pass
+        try:
+            conn.execute("PRAGMA busy_timeout=5000;")
+        except Exception:
+            pass
+        return conn
+
+    with _db_lock:
+        if _shared_connection is None:
+            try:
+                os.makedirs(os.path.dirname(os.path.abspath(target_path)), exist_ok=True)
+            except Exception:
+                pass
+            conn = sqlite3.connect(target_path, timeout=10.0, check_same_thread=False)
+            conn.row_factory = sqlite3.Row
+            try:
+                conn.execute("PRAGMA journal_mode=WAL;")
+            except Exception:
+                pass
+            try:
+                conn.execute("PRAGMA busy_timeout=5000;")
+            except Exception:
+                pass
+            _shared_connection = conn
+        return _shared_connection
+
+
+def close_db_connection():
+    """
+    Closes the shared SQLite connection during application shutdown.
+    """
+    global _shared_connection
+    with _db_lock:
+        if _shared_connection is not None:
+            try:
+                _shared_connection.close()
+            except Exception:
+                pass
+            _shared_connection = None
 
 
 def init_db(db_path: Optional[str] = None):
@@ -38,7 +82,7 @@ def init_db(db_path: Optional[str] = None):
     Initializes the SQLite schema for storing predictions.
     """
     try:
-        with get_db_connection(db_path) as conn:
+        with _db_lock, get_db_connection(db_path) as conn:
             cursor = conn.cursor()
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS predictions_store (
@@ -70,7 +114,7 @@ def prune_old_records(max_rows: Optional[int] = None, db_path: Optional[str] = N
     limit = max_rows or DEFAULT_MAX_ROWS
     pruned_count = 0
     
-    with get_db_connection(db_path) as conn:
+    with _db_lock, get_db_connection(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) as cnt FROM predictions_store;")
         total = cursor.fetchone()["cnt"]
@@ -89,6 +133,8 @@ def prune_old_records(max_rows: Optional[int] = None, db_path: Optional[str] = N
             conn.commit()
             
     _rows_pruned_last_cycle = pruned_count
+    if pruned_count > 0:
+        clear_rolling_stats_cache()
     return pruned_count
 
 
@@ -108,7 +154,7 @@ def insert_prediction(
     Ignores duplicates based on external_id.
     """
     probs_str = json.dumps(probabilities)
-    with get_db_connection(db_path) as conn:
+    with _db_lock, get_db_connection(db_path) as conn:
         cursor = conn.cursor()
         try:
             cursor.execute("""
@@ -117,7 +163,10 @@ def insert_prediction(
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?);
             """, (source, external_id, text, cleaned_text, sentiment, confidence, probs_str, latency_ms))
             conn.commit()
-            return cursor.rowcount > 0
+            if cursor.rowcount > 0:
+                clear_rolling_stats_cache()
+                return True
+            return False
         except sqlite3.Error as e:
             print(f"[DB Error] Insert failed: {e}")
             return False
@@ -132,7 +181,7 @@ def insert_batch_predictions(
     Bulk inserts a list of predictions.
     """
     inserted = 0
-    with get_db_connection(db_path) as conn:
+    with _db_lock, get_db_connection(db_path) as conn:
         cursor = conn.cursor()
         for item in predictions_list:
             probs_str = json.dumps(item.get("probabilities", {}))
@@ -157,19 +206,23 @@ def insert_batch_predictions(
             except sqlite3.Error:
                 pass
         conn.commit()
+    if inserted > 0:
+        clear_rolling_stats_cache()
     return inserted
 
 
 def get_recent_predictions(
     limit: int = 50,
+    offset: int = 0,
     source: Optional[str] = "live",
     db_path: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """
-    Fetches the most recent predictions ordered by created_at descending.
+    Fetches recent predictions ordered by created_at descending with pagination offset.
     If source is specified (e.g. 'live'), filters strictly by source.
     """
-    with get_db_connection(db_path) as conn:
+    with _db_lock:
+        conn = get_db_connection(db_path)
         cursor = conn.cursor()
         if source:
             cursor.execute("""
@@ -177,15 +230,15 @@ def get_recent_predictions(
                 FROM predictions_store
                 WHERE source = ?
                 ORDER BY id DESC
-                LIMIT ?;
-            """, (source, limit))
+                LIMIT ? OFFSET ?;
+            """, (source, limit, offset))
         else:
             cursor.execute("""
                 SELECT id, source, external_id, text, cleaned_text, sentiment, confidence, probabilities_json, latency_ms, created_at
                 FROM predictions_store
                 ORDER BY id DESC
-                LIMIT ?;
-            """, (limit,))
+                LIMIT ? OFFSET ?;
+            """, (limit, offset))
             
         rows = cursor.fetchall()
         results = []
@@ -210,17 +263,17 @@ def get_recent_predictions(
         return results
 
 
-def get_rolling_stats(
-    source: Optional[str] = "live",
-    db_path: Optional[str] = None
-) -> Dict[str, Any]:
+@lru_cache(maxsize=32)
+def _cached_rolling_stats_query(
+    source: Optional[str],
+    db_path: Optional[str],
+    bucket: int
+) -> tuple:
     """
-    Calculates aggregated statistics for stored predictions.
-    Defaults to source='live' so batch CSV uploads don't distort live ingestion metrics.
+    Internal cached helper for get_rolling_stats using time bucket.
     """
-    global _rows_pruned_last_cycle
-    
-    with get_db_connection(db_path) as conn:
+    with _db_lock:
+        conn = get_db_connection(db_path)
         cursor = conn.cursor()
         
         where_clause = "WHERE source = ?" if source else ""
@@ -263,7 +316,7 @@ def get_rolling_stats(
         neg_pct = round((neg_count / total) * 100, 2) if total > 0 else 0.0
         neu_pct = round((neu_count / total) * 100, 2) if total > 0 else 0.0
 
-        return {
+        res = {
             "total_count": total,
             "positive_pct": pos_pct,
             "negative_pct": neg_pct,
@@ -271,6 +324,29 @@ def get_rolling_stats(
             "avg_confidence": avg_conf,
             "latest_record_timestamp": latest_timestamp,
             "oldest_record_timestamp": oldest_timestamp,
-            "rows_pruned_last_cycle": _rows_pruned_last_cycle,
             "filtered_source": source or "all"
         }
+        return tuple(res.items())
+
+
+def clear_rolling_stats_cache():
+    """
+    Explicitly clears the in-memory rolling stats cache upon new record insertions or pruning.
+    """
+    _cached_rolling_stats_query.cache_clear()
+
+
+def get_rolling_stats(
+    source: Optional[str] = "live",
+    db_path: Optional[str] = None,
+    ttl_seconds: int = 8
+) -> Dict[str, Any]:
+    """
+    Calculates aggregated statistics for stored predictions with TTL caching (5-10 seconds).
+    Defaults to source='live' so batch CSV uploads don't distort live ingestion metrics.
+    """
+    global _rows_pruned_last_cycle
+    bucket = int(time.time() // max(1, ttl_seconds))
+    stats_data = dict(_cached_rolling_stats_query(source, db_path, bucket))
+    stats_data["rows_pruned_last_cycle"] = _rows_pruned_last_cycle
+    return stats_data
