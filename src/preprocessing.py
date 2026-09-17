@@ -68,11 +68,12 @@ def clean_text(text: str) -> str:
     
     Steps:
     1. Lowercase text
-    2. Remove URLs, user mentions (@username), HTML tags, and special characters/numbers
-    3. Tokenize into words
-    4. Remove English stopwords (PRESERVING negation words like not, no, never, n't)
-    5. Lemmatize tokens
-    6. Rejoin clean tokens into a normalized string
+    2. Expand negation contractions (don't -> do not, can't -> cannot, etc.)
+    3. Strip HTML tags, URLs, user mentions (@username), numbers, special characters
+    4. Tokenize into words
+    5. Remove non-negation stopwords and lemmatize
+    6. Generate compound negation tokens (e.g. 'not_nice', 'not_good') when negations occur
+       so linear Bag-of-Words models decouple negated terms from positive unigram/char subwords.
     
     Args:
         text (str): Raw input text string
@@ -110,14 +111,28 @@ def clean_text(text: str) -> str:
     except Exception:
         tokens = text.split()
         
-    # 7. Remove non-negation stopwords and 8. Lemmatize (with fallback if WordNet lookup fails)
+    # 7. Remove non-negation stopwords, lemmatize, and generate compound negation tokens
     cleaned_tokens = []
-    for token in tokens:
+    i = 0
+    while i < len(tokens):
+        token = tokens[i]
+        if token in NEGATION_WORDS and i + 1 < len(tokens):
+            next_token = tokens[i+1]
+            if next_token not in _stop_words:
+                try:
+                    lem_next = _lemmatizer.lemmatize(next_token)
+                except Exception:
+                    lem_next = next_token
+                cleaned_tokens.append("not")
+                cleaned_tokens.append(f"not_{lem_next}")
+                i += 2
+                continue
         if token not in _stop_words and len(token) > 1:
             try:
                 cleaned_tokens.append(_lemmatizer.lemmatize(token))
             except Exception:
                 cleaned_tokens.append(token)
+        i += 1
     
     return " ".join(cleaned_tokens)
 
